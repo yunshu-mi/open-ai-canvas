@@ -1,0 +1,42 @@
+---
+title: Docker 部署
+description: 发布 yunshu-mi 仓库的镜像并安装到 Linux 服务器
+---
+
+## 发布本仓库镜像
+
+本仓库的镜像命名空间为 `ghcr.io/yunshu-mi`，包含 `open-ai-canvas-backend`、`open-ai-canvas-web` 和 `open-ai-canvas-yingce-agent`。Fork 不会复制原作者的镜像或 Release，需要先完成本仓库的发布。
+
+1. 在 GitHub 仓库的 Actions 页面启用工作流。`Publish container images` 使用 `GITHUB_TOKEN` 发布 GHCR 镜像，不需要 Docker Hub 账号。
+2. 将部署配置的修改合并到 `main`。发布版本时，确保 `VERSION` 与准备创建的 `v` 开头标签完全一致，且 `CHANGELOG.md` 中存在对应的 `## v版本号` 标题。
+3. 将该版本标签推送到仓库，触发 `Publish container images`。`main` 构建只发布提交标签及 `latest`，不能代替完整 Release。
+4. 等待质量检查、三类镜像及 Host Updater 的发布全部成功。Release 应包含两种架构的更新器、`SHA256SUMS` 和 `docker-compose.deploy.yml`。
+5. 如需服务器免登录拉取，在 GitHub Packages 中将三类容器包的可见性设为 Public。私有包需要通过安装脚本支持的 `GHCR_USERNAME` 和 `GHCR_TOKEN` 配置认证；不要把 Token 写进仓库。
+
+镜像版本标签会去掉前导 `v`：例如 Release `v1.6.9.2` 对应镜像标签 `1.6.9.2`。安装脚本会自动转换，并将实际镜像固定为 digest。
+
+## 在服务器安装
+
+以下命令适用于使用 systemd 的 Linux 服务器。将 `vX.Y.Z` 换成本仓库已经发布成功的版本；该版本必须包含本次部署配置修改。
+
+```bash
+CANVAS_RELEASE=vX.Y.Z
+curl -fsSL "https://raw.githubusercontent.com/yunshu-mi/open-ai-canvas/${CANVAS_RELEASE}/scripts/install-server-image.sh" \
+  | sudo env CANVAS_IMAGE_TAG="${CANVAS_RELEASE}" REPOSITORY_REF="${CANVAS_RELEASE}" bash
+```
+
+脚本从 `yunshu-mi/open-ai-canvas` 下载 Compose 和更新器，并拉取 `ghcr.io/yunshu-mi/open-ai-canvas-*` 镜像。默认安装到 `/opt/open-ai-canvas`，使用 PostgreSQL、Redis、迁移服务、Agent、backend 和 web，对外暴露 web 的 `3000` 端口。
+
+访问 `http://服务器IP:3000`。后续通过“系统配置 → 系统更新”读取本仓库 Release。更新器安装程序将 `CANVAS_UPDATER_REPOSITORY=yunshu-mi/open-ai-canvas` 写入 `/etc/open-ai-canvas-updater.env`，保持镜像、配置、更新器二进制与更新来源一致。
+
+```bash
+cd /opt/open-ai-canvas
+sudo docker compose --env-file .env -f docker-compose.deploy.yml ps
+sudo docker compose --env-file .env -f docker-compose.deploy.yml logs -f --tail=200
+```
+
+## 已有部署
+
+已有服务器若仍使用上游镜像或其他 Compose，先核对并备份数据库、素材和 `.env`，再规划切换。修改仓库配置不会自动迁移已有服务器的数据或已安装的更新器。
+
+`docker-compose.local.yml` 用于本地构建试运行；`scripts/install-server.sh` 用于服务器源码构建。这两种方式不属于 Host Updater 管理的镜像部署。

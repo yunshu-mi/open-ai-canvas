@@ -54,6 +54,40 @@ func TestSetEnvValuePreservesOtherSettings(t *testing.T) {
 	}
 }
 
+func TestManagerRepositorySelectsDeploymentImages(t *testing.T) {
+	for _, repository := range []string{"", "another-owner/open-ai-canvas"} {
+		t.Run(repository, func(t *testing.T) {
+			directory := t.TempDir()
+			manager, err := NewManager(Config{
+				Repository: repository,
+				InstallDir: directory,
+				StateDir:   filepath.Join(directory, "state"),
+				BackupDir:  filepath.Join(directory, "backups"),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantRepository := repository
+			if wantRepository == "" {
+				wantRepository = "yunshu-mi/open-ai-canvas"
+			}
+			if manager.config.Repository != wantRepository {
+				t.Fatalf("repository=%q, want %q", manager.config.Repository, wantRepository)
+			}
+			owner := strings.SplitN(wantRepository, "/", 2)[0]
+			images := immutableImageRefs(manager.config.Repository, "v1.6.9.2")
+			want := deploymentImages{
+				backend: "ghcr.io/" + owner + "/open-ai-canvas-backend:1.6.9.2",
+				web:     "ghcr.io/" + owner + "/open-ai-canvas-web:1.6.9.2",
+				agent:   "ghcr.io/" + owner + "/open-ai-canvas-yingce-agent:1.6.9.2",
+			}
+			if images != want {
+				t.Fatalf("images=%+v, want %+v", images, want)
+			}
+		})
+	}
+}
+
 func TestVerifyZipBackupRejectsCorruption(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "backup.zip")
 	file, err := os.Create(path)
