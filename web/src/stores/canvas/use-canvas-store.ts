@@ -3,18 +3,17 @@ import { persist, type PersistStorage, type StorageValue } from "zustand/middlew
 
 import { nanoid } from "nanoid";
 import { sameCanvasContent } from "@/lib/canvas/canvas-content";
-import { canvasAppearanceBaseTheme, canvasAppearanceForTheme, DEFAULT_CANVAS_BACKGROUND_MODE, normalizeCanvasAppearance, readCanvasAppearanceDefault, type CanvasAppearance } from "@/lib/canvas/canvas-appearance";
+import { canvasAppearanceForPreset, DEFAULT_CANVAS_BACKGROUND_MODE, NEW_CANVAS_BACKGROUND_MODE, normalizeCanvasAppearance, readCanvasAppearanceDefault, type CanvasAppearance } from "@/lib/canvas/canvas-appearance";
 import { parseCanvasStorageDocument, rebaseCanvasProjects, serializeCanvasStorageDocument, type CanvasStorageDocument } from "@/lib/canvas/canvas-storage-revision";
 import { localForageStorageForScope } from "@/lib/localforage-storage";
 import { getActiveUserScope } from "@/lib/user-scope";
-import type { CanvasBackgroundMode } from "@/lib/canvas-theme";
-import { useCanvasThemeStore } from "@/stores/canvas/use-canvas-theme-store";
-import { useThemeStore } from "@/stores/use-theme-store";
+import { DEFAULT_CANVAS_COLOR_THEME, type CanvasBackgroundMode } from "@/lib/canvas-theme";
 import type { CanvasStarterMode } from "@/lib/canvas/canvas-starter";
 import type { CanvasAssistantSession, CanvasConnection, CanvasNodeData, ViewportTransform } from "@/types/canvas";
 import type { PrevisScene } from "@/types/previs";
 import type { TimelineProject } from "@/types/timeline";
 import { useSyncProgressStore, type SyncProjectProgress } from "@/stores/use-sync-progress-store";
+import { useThemeStore } from "@/stores/use-theme-store";
 import { recordDiagnosticEvent } from "@/services/diagnostics/client-diagnostics";
 
 export type CanvasProject = {
@@ -674,10 +673,6 @@ export const useCanvasStore = create<CanvasStore>()(
                 const now = new Date().toISOString();
                 const id = nanoid();
                 const appearanceDefault = readCanvasAppearanceDefault();
-                const canvasTheme = useCanvasThemeStore.getState();
-                const sourceTheme = canvasTheme.active ? canvasTheme.theme : useThemeStore.getState().theme;
-                const appearance = appearanceDefault?.appearance ?? canvasAppearanceForTheme(sourceTheme);
-                canvasTheme.setTheme(canvasAppearanceBaseTheme(appearance, sourceTheme));
                 const project: CanvasProject = {
                     id,
                     revision: 0,
@@ -689,8 +684,8 @@ export const useCanvasStore = create<CanvasStore>()(
                     connections: [],
                     chatSessions: [],
                     activeChatId: null,
-                    appearance,
-                    backgroundMode: appearanceDefault?.backgroundMode || DEFAULT_CANVAS_BACKGROUND_MODE,
+                    appearance: appearanceDefault?.appearance ?? canvasAppearanceForPreset(useThemeStore.getState().theme),
+                    backgroundMode: appearanceDefault?.backgroundMode || NEW_CANVAS_BACKGROUND_MODE,
                     showImageInfo: false,
                     viewport: initialViewport,
                     previsScenes: [],

@@ -13,7 +13,7 @@ const build = await Bun.build({
         setup(builder) {
             builder.onResolve({ filter: /^react$|^react\/jsx-(?:dev-)?runtime$|^motion\/react$|^lucide-react$|floating-dock$|use-canvas-theme-store$/ }, ({ path }) => ({ path, namespace: "test" }));
             builder.onLoad({ filter: /.*/, namespace: "test" }, ({ path }) => ({
-                contents: path === "react" ? "export const { useState, useRef, useEffect } = globalThis.hooks;"
+                contents: path === "react" ? "export const { useState, useRef, useEffect, useEffect: useLayoutEffect } = globalThis.hooks;"
                     : path.startsWith("react/") ? "export const jsx = (type, props) => ({ type, props }); export const jsxs = jsx; export const jsxDEV = jsx;"
                     : path === "motion/react" ? "export const AnimatePresence = 'presence'; export const motion = {div:'div',button:'button'};"
                     : path === "lucide-react" ? "export const Compass='svg',Eye='svg',EyeOff='svg',Focus='svg',HelpCircle='svg',LayoutTemplate='svg',Minus='svg',Plus='svg';"
@@ -72,6 +72,7 @@ function harness(scale = 0.5) {
                     get value() { return this.rawValue; },
                     set value(value) { this.valueWrites++; this.rawValue = value; },
                     contains: () => true,
+                    closest: () => null,
                 };
                 dom.set(ref, node);
             } else if (node.renderedText !== text) {

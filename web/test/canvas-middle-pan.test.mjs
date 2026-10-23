@@ -43,7 +43,7 @@ function harness(k = 1, boxSelectEnabled = true) {
         Object.freeze({ id: "b", position: Object.freeze({ x: 420, y: 200 }), width: 240, height: 120 }),
     ];
     const world = { style: {} };
-    const grid = { style: {} };
+    const grid = { style: {}, dataset: {} };
     const properties = new Map([["--canvas-committed-scale", String(k)]]);
     class Element extends EventTarget {
         closest() { return null; }
@@ -143,7 +143,9 @@ for (const tool of [{ name: "middle", button: 1, buttons: 4, boxSelectEnabled: t
         h.frame();
         expect(h.current).toEqual({ x: 85, y: 25, k });
         expect(h.world.style.transform).toBe("translate3d(85px, 25px, 0) scale(1)");
-        expect(h.grid.style.backgroundPosition).toBe("85px 25px");
+        // 上游网格按 24px 周期折叠，并为左上方预留 64px。
+        expect(h.grid.style.transform).toBe("translate3d(5px, 17px, 0)");
+        expect(h.grid.style.backgroundSize).toBe("24px 24px");
         expect(h.graphics.at(-1)).toEqual(h.current);
         expect(JSON.stringify(h.nodes)).toBe(original);
         expect(h.commits).toHaveLength(0);
