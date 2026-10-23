@@ -9,7 +9,7 @@ description: 发布 yunshu-mi 仓库的镜像并安装到 Linux 服务器
 
 1. 在 GitHub 仓库的 Actions 页面启用工作流。`Publish container images` 使用 `GITHUB_TOKEN` 发布 GHCR 镜像，不需要 Docker Hub 账号。
 2. 将部署配置的修改合并到 `main`。发布版本时，确保 `VERSION` 与准备创建的 `v` 开头标签完全一致，且 `CHANGELOG.md` 中存在对应的 `## v版本号` 标题。
-3. 将该版本标签推送到仓库，触发 `Publish container images`。`main` 构建只发布提交标签及 `latest`，不能代替完整 Release。
+3. 将正式版本标签推送到仓库，触发 `Publish container images`。仅接受 `v1.2.3` 或 `v1.6.9.2` 这类三段或四段纯数字版本；普通提交、合并到 `main`、预发布标签（如 `v1.2.3-rc.1`）均不构建或发布镜像，也不提供手动构建入口。
 4. 等待质量检查、三类镜像及 Host Updater 的发布全部成功。Release 应包含两种架构的更新器、`SHA256SUMS` 和 `docker-compose.deploy.yml`。
 5. 如需服务器免登录拉取，在 GitHub Packages 中将三类容器包的可见性设为 Public。私有包需要通过安装脚本支持的 `GHCR_USERNAME` 和 `GHCR_TOKEN` 配置认证；不要把 Token 写进仓库。
 

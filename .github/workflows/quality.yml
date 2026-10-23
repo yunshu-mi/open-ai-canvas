@@ -23,6 +23,7 @@ jobs:
         run: |
           bash -n scripts/install-server-image.sh scripts/install-host-updater.sh scripts/install-server.sh
           bash scripts/test-image-deployment.sh
+          bash scripts/test-image-release.sh
 
   agent-lint:
     name: Agent architecture and static checks

@@ -7,6 +7,7 @@ description: 当前项目已实现功能的手工验证清单与未确认边界
 
 ## 本仓库镜像发布与部署
 
+- 已修改：只有三段或四段纯数字的正式版本标签触发镜像发布，普通提交和预发布标签不触发；待在真实版本发布时验收。
 - 已修改：镜像安装、Compose 默认 Agent 镜像、Host Updater 默认仓库及持久配置均使用 `yunshu-mi/open-ai-canvas`。
 - [ ] 在 GitHub Actions 完成本仓库三类镜像、Host Updater 和校验清单的首次 Release 发布。
 - [ ] 在 Linux 服务器拉取已发布版本，确认服务启动、登录和模型任务正常。

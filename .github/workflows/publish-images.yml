@@ -2,16 +2,14 @@ name: Publish container images
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - "v*"
-  workflow_dispatch:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: read
 
-# main 和 tag 的同一提交串行进入；后到的一轮复用已校验的 SHA 镜像。
+# 同一提交的版本标签与重跑串行进入。
 concurrency:
   group: publish-${{ github.sha }}
   cancel-in-progress: false
@@ -19,6 +17,7 @@ concurrency:
 jobs:
   checks:
     name: Quality checks
+    needs: prepare
     uses: ./.github/workflows/quality.yml
 
   prepare:
@@ -37,14 +36,13 @@ jobs:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
         shell: bash
         run: |
+          [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "Only stable version tags can publish images" >&2; exit 1; }
           version="$(tr -d '\r\n' < VERSION)"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            [[ "$version" == "$GITHUB_REF_NAME" ]] || { echo "VERSION=$version does not match tag $GITHUB_REF_NAME" >&2; exit 1; }
-            grep -Fqx "## $version" CHANGELOG.md || { echo "CHANGELOG.md is missing ## $version" >&2; exit 1; }
-          fi
+          [[ "$version" == "$GITHUB_REF_NAME" ]] || { echo "VERSION=$version does not match tag $GITHUB_REF_NAME" >&2; exit 1; }
+          grep -Fqx "## $version" CHANGELOG.md || { echo "CHANGELOG.md is missing ## $version" >&2; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "image_tag=${version#v}" >> "$GITHUB_OUTPUT"
-          # 相同提交的 main/tag/重跑使用相同时间，避免人为破坏缓存。
+          # 相同提交的标签与重跑使用相同时间，避免人为破坏缓存。
           echo "build_time=$(git show -s --format=%cI HEAD)" >> "$GITHUB_OUTPUT"
           echo "owner=${REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
