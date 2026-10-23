@@ -5,6 +5,13 @@ description: 当前项目已实现功能的手工验证清单与未确认边界
 
 # 待测试
 
+## 本仓库镜像发布与部署
+
+- 已修改：镜像安装、Compose 默认 Agent 镜像、Host Updater 默认仓库及持久配置均使用 `yunshu-mi/open-ai-canvas`。
+- [ ] 在 GitHub Actions 完成本仓库三类镜像、Host Updater 和校验清单的首次 Release 发布。
+- [ ] 在 Linux 服务器拉取已发布版本，确认服务启动、登录和模型任务正常。
+- [ ] 确认后台检查更新读取本仓库 Release，并在备份后验证更新和回退。
+
 ## Fork 上游合并
 
 - 合并 `ddcat-ai/open-ai-canvas` 的 `cd694236`，保留 Fork 原有历史及独有的 200T / Vinted Seedance、资源缩略图和画布交互改动。

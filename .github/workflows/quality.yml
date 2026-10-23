@@ -14,6 +14,16 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  deployment:
+    name: Image deployment configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deployment scripts
+        run: |
+          bash -n scripts/install-server-image.sh scripts/install-host-updater.sh scripts/install-server.sh
+          bash scripts/test-image-deployment.sh
+
   agent-lint:
     name: Agent architecture and static checks
     runs-on: ubuntu-latest
