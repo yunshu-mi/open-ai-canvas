@@ -164,5 +164,6 @@ cd web && bun run dev
 - API、数据表、SSE、资源存储、部署或安全边界变化时同步对应专题文档；不要只改代码和根 README。
 - 文档默认中文，不写过期日期，不公开密码、Token、Cookie、真实账号或机器敏感路径。命令、端口、环境变量必须以当前脚本和 Compose 为准。
 - Git 提交说明使用 `<type>(<scope>): <业务模块> - <变更摘要>`，`type` 为 `feat|fix|refactor|perf|docs|test|build|ci|chore|revert`。
+- 推送使用开发分支（默认 `codex/` 前缀），禁止直接推送或绕过保护更新 `main`。开发分支推送后由 GitHub Actions 自动创建或复用 PR，并启用 squash 自动合并；只有最新提交的 `PR validation` 全部通过、分支包含最新 `main` 且讨论已解决时才能合并。失败、取消、跳过、冲突或草稿 PR 不得强行合并。仓库设置与排障见 [本地开发](docs/content/docs/backend/local-development.mdx)。
 
 交付前至少检查：改动是否聚焦、调用方和类型是否同步、错误/权限/数据归属是否完整、必要文档是否同步、验证是否如实说明、是否留下密钥或本地数据。

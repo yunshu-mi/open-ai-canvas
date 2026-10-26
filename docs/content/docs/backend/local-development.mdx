@@ -5,6 +5,25 @@ description: 在宿主机启动影策前后端开发服务
 
 # 本地开发
 
+## 开发分支、自动 PR 与合并
+
+所有修改先提交到开发分支，默认使用 `codex/` 前缀，再推送到 `origin`；不得直接推送 `main`。
+
+```bash
+git switch -c codex/my-change
+git add <本次修改的文件>
+git commit -m "fix(scope): 业务模块 - 变更摘要"
+git push -u origin HEAD
+```
+
+`.github/workflows/automatic-pr.yml` 在开发分支推送后自动创建以默认分支为目标的 PR，已有 PR 则复用，并启用 squash 自动合并。没有领先默认分支的提交时不创建 PR；已有草稿 PR 保持草稿，标记为可审查后再次推送以启用自动合并。
+
+`.github/workflows/quality.yml` 在开发分支推送和 PR 事件时运行现有检查。`PR validation` 汇总部署配置、Agent 静态检查、后端、支付插件和前端五项结果，任一失败、取消或跳过均不通过。分支连续推送时取消旧检查，合并始终以最新提交为准。版本标签发布仍调用同一质量工作流，不自动创建 PR。
+
+仓库设置需开启 **Allow auto-merge** 及 Actions 的 **Allow GitHub Actions to create and approve pull requests**。`main` 分支保护要求 PR、`PR validation`（来源为 GitHub Actions）、分支包含最新 `main`、讨论全部解决，并对管理员同样生效；不允许强推或删除，不要求额外人工批准票数。自动化只使用当前仓库的 `GITHUB_TOKEN`，无需保存个人访问令牌。
+
+使用 `GITHUB_TOKEN` 创建的 PR，其 PR 事件工作流可能需要人工批准；开发分支的 push 检查独立运行，可提供合并必需的检查结果，见 [GitHub 工作流触发说明](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)。已有人工创建的 PR 可能同时运行 push 和 PR 检查。若其他 PR 已合入 `main`，先将最新 `origin/main` 合入开发分支或 rebase 后重新推送；检查失败或存在冲突时保留 PR 排查，不绕过保护。
+
 ## SMTP 邮件故障日志
 
 注册、登录、绑定邮箱和密码找回的邮件投递失败统一输出 `ERROR` 级别的 `smtp email delivery failed` 后端日志。日志包含 `host`、`port`、`encryption`、脱敏 `recipient` 和 `error`，默认 `CANVAS_LOG_LEVEL=info` 即可看到，无需开启 debug。
