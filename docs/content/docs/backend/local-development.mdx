@@ -7,14 +7,19 @@ description: 在宿主机启动影策前后端开发服务
 
 ## 开发分支、自动 PR 与合并
 
-所有修改先提交到开发分支，默认使用 `codex/` 前缀，再推送到 `origin`；不得直接推送 `main`。
+本地修改默认在尚未推送的开发分支进行，分支使用 `codex/` 前缀。若当前位于 `main`，先创建本地开发分支；后续需求继续在当前开发分支修改，默认不推送，直到用户明确要求推送到 `origin`。不得直接推送 `main`。
 
 ```bash
 git switch -c codex/my-change
 git add <本次修改的文件>
 git commit -m "fix(scope): 业务模块 - 变更摘要"
+# 仅在用户明确要求推送时执行
 git push -u origin HEAD
+# 推送成功后立即轮换；新分支仅保留在本地
+git switch -c codex/next-change
 ```
+
+每次推送成功后，以刚推送的提交创建并切换到新的本地开发分支，后续修改默认留在新分支；不因上一批 PR 已合并而切回 `main` 开发。推送失败时保留当前分支。前一批 PR 若已 squash 合并，下一次推送前核对最新 `origin/main` 并整理继承的已合并提交，避免重复带入新 PR。
 
 `.github/workflows/automatic-pr.yml` 在开发分支推送后自动创建以默认分支为目标的 PR，已有 PR 则复用，并启用 squash 自动合并。没有领先默认分支的提交时不创建 PR；已有草稿 PR 保持草稿，标记为可审查后再次推送以启用自动合并。
 
