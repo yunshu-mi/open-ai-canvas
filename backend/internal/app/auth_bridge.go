@@ -26,22 +26,6 @@ type (
 	LinuxDOSettingRequest      = auth.LinuxDOSettingRequest
 	PublicLinuxDOSetting       = auth.PublicLinuxDOSetting
 	LinuxDOCallbackResult      = auth.LinuxDOCallbackResult
-	LibTVSettingRequest        = auth.LibTVSettingRequest
-	PublicLibTVSetting         = auth.PublicLibTVSetting
-	LibTVImportRequest         = auth.LibTVImportRequest
-	LibTVImportResult          = auth.LibTVImportResult
-	LibTVCanvasConnection      = auth.LibTVCanvasConnection
-	LibTVCanvasNode            = auth.LibTVCanvasNode
-	LibTVImportIssue           = auth.LibTVImportIssue
-	LibTVImportMetadata        = auth.LibTVImportMetadata
-	LibTVImportWarning         = auth.LibTVImportWarning
-	TapNowImportRequest        = auth.TapNowImportRequest
-	TapNowImportResult         = auth.TapNowImportResult
-	TapNowCanvasConnection     = auth.TapNowCanvasConnection
-	TapNowCanvasNode           = auth.TapNowCanvasNode
-	TapNowImportIssue          = auth.TapNowImportIssue
-	TapNowImportMetadata       = auth.TapNowImportMetadata
-	TapNowImportWarning        = auth.TapNowImportWarning
 )
 
 type authHost struct {
@@ -209,26 +193,6 @@ func (s *Service) BeginLinuxDOLogin(nextPath string, acceptedTerms bool) (string
 
 func (s *Service) CompleteLinuxDOLogin(stateValue string, code string, cookieValue string, contexts ...LoginContext) (*LinuxDOCallbackResult, error) {
 	return s.authDomain().CompleteLinuxDOLogin(stateValue, code, cookieValue, contexts...)
-}
-
-func (s *Service) AdminLibTVSetting(actor *model.User) (*PublicLibTVSetting, error) {
-	return s.authDomain().AdminLibTVSetting(actor)
-}
-
-func (s *Service) UpdateLibTVSetting(actor *model.User, req LibTVSettingRequest) (*PublicLibTVSetting, error) {
-	return s.authDomain().UpdateLibTVSetting(actor, req)
-}
-
-func (s *Service) TestLibTV(actor *model.User, projectUUID string) error {
-	return s.authDomain().TestLibTV(actor, projectUUID)
-}
-
-func (s *Service) ImportLibTV(userID, canvasProjectID, projectUUID string) (*LibTVImportResult, error) {
-	return s.authDomain().ImportLibTV(userID, canvasProjectID, projectUUID)
-}
-
-func (s *Service) ImportTapNow(userID, canvasProjectID, shareID string) (*TapNowImportResult, error) {
-	return s.authDomain().ImportTapNow(userID, canvasProjectID, shareID)
 }
 
 func hashPassword(password string) (string, error) {

@@ -5,6 +5,7 @@ import { AlertCircle, Archive, Bug, CheckCircle2, Clock, Inbox, Lightbulb, Messa
 import { submitFeedback, getMyFeedbacks, uploadFeedbackAttachment, type FeedbackItem, type FeedbackType, type FeedbackAttachment } from "@/services/api/feedback";
 import { useUserStore } from "@/stores/use-user-store";
 import { cn } from "@/lib/utils";
+import "./feedback-modal.css";
 
 interface FeedbackModalProps {
     open: boolean;
@@ -459,7 +460,7 @@ export function FeedbackModal({ open, onClose, initialTab = "submit" }: Feedback
                 {/* Fixed Footer for Submit Tab */}
                 {activeTab === "submit" ? (
                     <div className="border-t border-border/60 px-4 py-3 sm:px-6 sm:py-3.5 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-muted-foreground">
+                        <label className="feedback-environment-option flex items-center gap-2 cursor-pointer select-none text-xs text-muted-foreground">
                             <Checkbox checked={includeEnv} onChange={(e) => setIncludeEnv(e.target.checked)} />
                             <span>附带诊断环境信息（推荐）</span>
                         </label>

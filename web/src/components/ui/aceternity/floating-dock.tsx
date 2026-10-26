@@ -154,7 +154,7 @@ function renderDockItems(items: FloatingDockEntry[], props: DockItemRenderProps)
     return result;
 }
 
-function DockTooltip({ show, label, compact }: { show: boolean; label: string; compact: boolean }) {
+export function DockTooltip({ show, label, compact }: { show: boolean; label: string; compact: boolean }) {
     return (
         <AnimatePresence>
             {show ? (
@@ -176,7 +176,7 @@ function DockTooltip({ show, label, compact }: { show: boolean; label: string; c
 }
 
 /** 鼠标点击产生的 focus 不保持提示，只有键盘可见焦点才持续显示。 */
-function useDockTooltip() {
+export function useDockTooltip() {
     const [hovered, setHovered] = useState(false);
     const [focused, setFocused] = useState(false);
     return {

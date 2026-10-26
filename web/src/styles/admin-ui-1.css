@@ -2,8 +2,8 @@
  * Keep status actions in the sticky top command bar. Configuration summaries remain
  * full-width document content so they never become a detached side panel while scrolling.
  */
-:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings, .admin-third-party-settings)
-    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview, .admin-third-party-overview)
+:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings)
+    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview)
     .admin-stat-tile {
     min-height: 88px;
     padding: 14px 16px;
@@ -1339,15 +1339,15 @@
     }
 }
 
-:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings, .admin-third-party-settings)
-    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview, .admin-third-party-overview)
+:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings)
+    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview)
     .admin-stat-tile-value {
     margin-top: 5px;
     font-size: 18px;
 }
 
-:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings, .admin-third-party-settings)
-    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview, .admin-third-party-overview)
+:is(.admin-drawing-settings, .admin-runtime-policy, .admin-access-settings, .admin-email-settings, .admin-storage-settings, .admin-ark-settings, .admin-intercept-settings)
+    :is(.admin-drawing-overview, .admin-runtime-policy-overview, .admin-access-overview, .admin-email-overview, .admin-storage-overview, .admin-ark-overview, .admin-intercept-overview)
     .admin-stat-tile-detail {
     margin-top: 5px;
 }

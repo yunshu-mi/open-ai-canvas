@@ -13,7 +13,7 @@ import { VideoPlayer } from "@/components/video-player";
 import { CanvasSubtitleOverlay } from "./canvas-subtitle-overlay";
 import { type CanvasNodeData, CanvasNodeType } from "@/types/canvas";
 import { CanvasAudioPlayer } from "./canvas-audio-player";
-import { buildLibTVImagePreviewUrl, buildLibTVVideoSourceUrl } from "@/lib/canvas/libtv-import";
+import { buildLibTVImagePreviewUrl, buildLibTVVideoSourceUrl } from "@/lib/canvas/libtv-media";
 import { bindCanvasVideoHoverPreview } from "@/lib/canvas/canvas-video-hover-preview";
 import { resolveVideoMediaUrl } from "@/services/file-storage";
 import { hydrateCanvasVideoPreview } from "@/services/canvas-video-preview";

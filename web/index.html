@@ -15,7 +15,11 @@
             html,
             body {
                 margin: 0;
-                background: #ffffff;
+                background: var(--background, #ffffff);
+            }
+            html.dark,
+            html.dark body {
+                background: var(--background, #0f0f0f);
             }
             #root:empty {
                 min-height: 100vh;
@@ -56,15 +60,16 @@
             }
         </style>
         <script>
+            var t = "dark";
             try {
                 var s = JSON.parse(localStorage.getItem("yingce:theme_store") || "{}");
-                var t = s.state && s.state.theme === "dark" ? "dark" : "light";
-                document.documentElement.classList.toggle("dark", t === "dark");
-                document.documentElement.style.colorScheme = t;
+                t = s && s.state && s.state.theme === "light" ? "light" : "dark";
             } catch (e) {}
+            document.documentElement.classList.toggle("dark", t === "dark");
+            document.documentElement.style.colorScheme = t;
         </script>
     </head>
-    <body class="bg-background text-foreground antialiased" style="background:#ffffff">
+    <body class="bg-background text-foreground antialiased">
         <div id="root"></div>
         <script type="module" src="/src/main.tsx"></script>
     </body>

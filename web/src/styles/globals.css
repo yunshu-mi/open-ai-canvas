@@ -12634,13 +12634,6 @@ html:not(.dark) .creation-history-drawer-root {
     box-shadow: none !important;
 }
 
-/* Modal 关闭后会把焦点还给触发按钮；收窄该按钮的键盘焦点环，避免出现持续的粗灰边。 */
-.canvas-topbar-import-button:focus-visible {
-    outline: 1px solid color-mix(in srgb, var(--foreground) 55%, transparent) !important;
-    outline-offset: 1px !important;
-    box-shadow: none !important;
-}
-
 :where([class*="card"], [class*="Card"]):focus:not(:focus-visible),
 :where([class*="card"], [class*="Card"]):has(:focus:not(:focus-visible)) {
     outline: none !important;
@@ -18318,7 +18311,11 @@ html:not(.dark) .creation-home .creation-user-message-copy-wrap { box-shadow: 0 
     color: var(--user-ink) !important;
 }
 .app-user-workspace .app-workspace-topbar-breadcrumb { color: var(--user-ink-muted) !important; }
-.app-user-workspace .app-workspace-topbar-credit-pill { border-color: var(--user-border) !important; background: var(--user-surface) !important; color: var(--user-ink-muted) !important; }
+.app-user-workspace .app-workspace-topbar-credit-pill,
+.dark .app-user-workspace .app-workspace-topbar-login-button { background: var(--user-surface) !important; }
+.app-user-workspace .app-workspace-topbar-credit-pill { border-color: var(--user-border) !important; color: var(--user-ink-muted) !important; }
+.dark .app-user-workspace .app-workspace-topbar-login-button:hover { background: var(--user-surface-hover) !important; }
+.dark .app-user-workspace .app-workspace-topbar-login-button:active { background: var(--user-control-pressed) !important; }
 .app-user-workspace .app-workspace-topbar-credit-pill:hover,
 .app-user-workspace .app-workspace-topbar-credit-pill:focus-visible {
     border-color: color-mix(in srgb, #ff8a28 36%, var(--user-border)) !important;

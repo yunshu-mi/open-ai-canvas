@@ -12,6 +12,7 @@ import { useWorkspaceLogout } from "@/hooks/use-workspace-logout";
 import { aceternityMotion } from "@/lib/aceternity-motion";
 import { cn } from "@/lib/utils";
 import { preloadWorkspaceRoute } from "@/lib/workspace-route-modules";
+import { preloadAuthVideo } from "@/services/auth-video";
 import { useUserStore, type FeatureAvailability } from "@/stores/use-user-store";
 import { useAppearanceStore } from "@/stores/use-appearance-store";
 import { WorkspaceAccountCard } from "./workspace-account-card";
@@ -78,7 +79,7 @@ function WorkspaceSidebarProfile({ collapsed, user, onExpand, onCollapse }: { co
 
     if (!user) {
         return (
-            <Link to="/login" className={cn("app-workspace-sidebar-profile", collapsed && "is-collapsed")} aria-label="登录" title="登录">
+            <Link to="/login" onPointerEnter={preloadAuthVideo} onFocus={preloadAuthVideo} onPointerDown={preloadAuthVideo} className={cn("app-workspace-sidebar-profile", collapsed && "is-collapsed")} aria-label="登录" title="登录">
                 <span className="app-workspace-sidebar-profile-avatar">
                     <CircleUserRound aria-hidden />
                 </span>

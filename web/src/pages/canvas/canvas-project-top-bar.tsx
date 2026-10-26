@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Clapperboard, CloudDownload, CopyPlus, Focus, FolderKanban, Home, LayoutGrid, LoaderCircle, Menu, Moon, Pencil, Plus, Redo2, Save, Search, Share2, Sun, Trash2, Undo2, Upload } from "lucide-react";
+import { Clapperboard, Focus, FolderKanban, Home, LayoutGrid, LoaderCircle, Menu, Moon, Pencil, Plus, Redo2, Save, Search, Share2, Sun, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Tooltip } from "antd";
 
 import { WorkspaceCreditGiftMark } from "@/components/layout/workspace-credit-gift-mark";
@@ -29,8 +29,6 @@ type CanvasTopBarProps = {
     onDeleteProject: () => void;
     onSave: () => void | Promise<void>;
     onImportImage: () => void;
-    onImportLibTV: () => void;
-    onImportTapNow: () => void;
     onUndo: () => void;
     onRedo: () => void;
     onShare: () => void;
@@ -57,8 +55,6 @@ export function CanvasTopBar({
     onDeleteProject,
     onSave,
     onImportImage,
-    onImportLibTV,
-    onImportTapNow,
     onUndo,
     onRedo,
     onShare,
@@ -188,22 +184,6 @@ export function CanvasTopBar({
                             onClick={onOpenSearch}
                             aria-label="搜索画布节点"
                         />
-                    </CanvasTopBarTooltip>
-                    <CanvasTopBarTooltip label="导入第三方画布">
-                        <Dropdown
-                            trigger={["click"]}
-                            placement="bottomRight"
-                            menu={{
-                                items: [
-                                    { key: "libtv", icon: <CopyPlus className="size-4" />, label: "导入 LibTV 画布", onClick: onImportLibTV },
-                                    { key: "tapnow", icon: <CloudDownload className="size-4" />, label: "导入 TapNow 画布", onClick: onImportTapNow },
-                                ],
-                            }}
-                        >
-                            <Button type="text" className="canvas-topbar-action canvas-topbar-import-button !h-10 !rounded-xl !px-2.5 !font-medium" style={{ color: theme.node.text }} icon={<CloudDownload className="size-4" />} aria-label="导入第三方画布">
-                                <span className="hidden lg:inline">导入第三方画布</span>
-                            </Button>
-                        </Dropdown>
                     </CanvasTopBarTooltip>
                     {user && creditsEnabled ? (
                         <CanvasTopBarTooltip label="打开积分中心">

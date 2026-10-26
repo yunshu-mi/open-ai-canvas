@@ -24,7 +24,9 @@ export type AgentCanvasContext = {
 type GlobalAgentStore = {
     /** 平台唯一 Agent 面板的开合状态，跨路由保持。 */
     open: boolean;
+    launcherHost: HTMLDivElement | null;
     canvas: AgentCanvasContext | null;
+    setLauncherHost: (host: HTMLDivElement | null) => void;
     openAgent: () => void;
     closeAgent: () => void;
     setCanvas: (canvas: AgentCanvasContext | null) => void;
@@ -33,7 +35,9 @@ type GlobalAgentStore = {
 
 export const useGlobalAgentStore = create<GlobalAgentStore>()((set) => ({
     open: false,
+    launcherHost: null,
     canvas: null,
+    setLauncherHost: (launcherHost) => set({ launcherHost }),
     openAgent: () => set({ open: true }),
     closeAgent: () => set({ open: false }),
     setCanvas: (canvas) => set({ canvas }),

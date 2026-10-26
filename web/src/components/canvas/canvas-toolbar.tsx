@@ -16,6 +16,7 @@ import type { CanvasAppearance } from "@/lib/canvas/canvas-appearance";
 import { canvasThemes, type CanvasBackgroundMode, type CanvasTheme } from "@/lib/canvas-theme";
 import { defaultToolbarPrefs, readToolbarPrefs, resolveToolbarEntries, type ToolContext, type ToolbarHandlers, type ToolbarPrefs } from "@/lib/canvas/tool-registry";
 import { useActiveTheme } from "@/stores/canvas/use-canvas-theme-store";
+import { useGlobalAgentStore } from "@/stores/use-global-agent-store";
 import type { CanvasNodeTypeId, CanvasToolMode, CanvasWorkspaceMode } from "@/types/canvas";
 
 export function CanvasToolbar({
@@ -93,7 +94,7 @@ export function CanvasToolbar({
 }) {
     const rootRef = useRef<HTMLDivElement>(null);
     const { bringToFront, zIndex } = useCanvasOverlayLayer("main-toolbar", "var(--z-toolbar)");
-    const dockRef = useRef<HTMLDivElement>(null);
+    const setLauncherHost = useGlobalAgentStore((state) => state.setLauncherHost);
     const colorTheme = useActiveTheme();
     const theme = canvasThemes[colorTheme];
     const [addOpen, setAddOpen] = useState(false);
@@ -111,7 +112,7 @@ export function CanvasToolbar({
         if (!settingsOpen) setPrefs(readToolbarPrefs("main"));
     }, [settingsOpen]);
 
-    const placePanel = (event: ReactMouseEvent<HTMLElement>) => setPanelX(getPanelX(dockRef.current, event.currentTarget));
+    const placePanel = (event: ReactMouseEvent<HTMLElement>) => setPanelX(getPanelX(rootRef.current, event.currentTarget));
     const runAddAction = (action: () => void) => {
         action();
         setAddOpen(false);
@@ -206,7 +207,10 @@ export function CanvasToolbar({
                 ) : null}
             </AnimatePresence>
 
-            <FloatingDock ref={dockRef} items={items} className="canvas-floating-dock pointer-events-auto max-w-full" style={canvasDockStyle(theme)} />
+            <div className="relative flex min-w-0 max-w-[calc(100%_-_2_*_var(--space-20))]">
+                <FloatingDock items={items} className="canvas-floating-dock pointer-events-auto min-w-0 max-w-full" style={canvasDockStyle(theme)} />
+                <div ref={setLauncherHost} className="pointer-events-auto absolute left-full top-1/2 ml-[var(--space-3)] aspect-square h-[calc(100%_+_var(--space-6))] -translate-y-1/2" />
+            </div>
 
             <AnimatePresence>
                 {appearanceOpen ? (
@@ -251,9 +255,9 @@ function PanelHeading({ icon, title, subtitle, theme }: { icon: ReactNode; title
     );
 }
 
-function getPanelX(dock: HTMLDivElement | null, target: HTMLElement) {
-    if (!dock) return 0;
-    const rootBox = dock.parentElement?.getBoundingClientRect() || dock.getBoundingClientRect();
+function getPanelX(root: HTMLDivElement | null, target: HTMLElement) {
+    if (!root) return 0;
+    const rootBox = root.getBoundingClientRect();
     const box = target.getBoundingClientRect();
     return box.left - rootBox.left + box.width / 2;
 }

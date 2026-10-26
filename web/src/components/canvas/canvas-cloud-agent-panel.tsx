@@ -1,5 +1,6 @@
 import { createClientUUID } from "@/lib/client-id";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "antd";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { MoveDiagonal2 } from "lucide-react";
@@ -69,7 +70,7 @@ import { CanvasCloudAgentSettings, type AgentContextKey } from "./canvas-cloud-a
 import { useAgentPanelLayout } from "./use-agent-panel-layout";
 import "./canvas-cloud-agent.css";
 import { appendAgentError, appendUniqueMessage, applyAgentEvent, positiveNumber, type ApprovalState } from "./canvas-cloud-agent-events";
-import { AgentContextRing, AgentConversation, AgentHeader, AgentHistory, ComposerControls } from "./canvas-cloud-agent-panel-parts";
+import { AgentContextRing, AgentConversation, AgentHeader, AgentHistory, AgentLauncher, ComposerControls } from "./canvas-cloud-agent-panel-parts";
 import { AgentConnectorsBar } from "./canvas-cloud-agent-connectors";
 import { useGlobalAgentStore, type AgentPrefillRequest } from "@/stores/use-global-agent-store";
 
@@ -92,6 +93,8 @@ const EMPTY_REFERENCES: CanvasResourceReference[] = [];
 export const CanvasCloudAgentPanel = memo(function CanvasCloudAgentPanel() {
     const canvasContext = useGlobalAgentStore((state) => state.canvas);
     const open = useGlobalAgentStore((state) => state.open);
+    const launcherHost = useGlobalAgentStore((state) => state.launcherHost);
+    const onOpen = useGlobalAgentStore((state) => state.openAgent);
     const onCollapse = useGlobalAgentStore((state) => state.closeAgent);
     const canvasId = canvasContext?.canvasId ?? "";
     const domainProjectId = canvasContext?.domainProjectId;
@@ -1245,6 +1248,7 @@ export const CanvasCloudAgentPanel = memo(function CanvasCloudAgentPanel() {
 
     return (
         <>
+            {launcherHost ? createPortal(<AgentLauncher theme={theme} statusColor={statusColor} approvalPending={status === "waiting_approval"} reducedMotion={Boolean(reducedMotion)} status={status} hidden={open} onOpen={onOpen} />, launcherHost) : null}
             <AnimatePresence>
                 {open ? (
                     <motion.aside

@@ -6,15 +6,18 @@ import partsSource from "../src/components/canvas/canvas-cloud-agent-panel-parts
 
 // 同一路径一旦被 text 加载器注册，bun 1.3.9 的模块缓存会让其它测试的具名导入失效，这里直接读源码文本。
 const avatarSource = readFileSync(new URL("../src/components/canvas/live2d-avatar.tsx", import.meta.url), "utf8");
+const avatarConfigSource = readFileSync(new URL("../src/components/canvas/use-agent-avatar.ts", import.meta.url), "utf8");
 
-test("global Agent panel does not render the floating avatar launcher", () => {
-    expect(panelSource).not.toContain("AgentLauncher");
+test("Agent launcher renders only inside the canvas toolbar host", () => {
+    expect(panelSource).toContain("{launcherHost ? createPortal(<AgentLauncher");
+    expect(panelSource).toContain("hidden={open}");
     expect(panelSource).toContain("{open ? (");
 });
 
 test("launcher waits for appearance configuration and avatar manifest before displaying the default orb", () => {
-    expect(partsSource).toContain("const appearanceResolved = useAppearanceStore((state) => state.resolved)");
-    expect(partsSource).toContain("bundleManifestLoading || !appearanceResolved");
+    expect(partsSource).toContain("useAgentAvatar(status)");
+    expect(avatarConfigSource).toContain("const appearanceResolved = useAppearanceStore((state) => state.resolved)");
+    expect(avatarConfigSource).toContain("bundleManifestLoading || !appearanceResolved");
     expect(partsSource).toContain("正在加载助手形象");
 });
 

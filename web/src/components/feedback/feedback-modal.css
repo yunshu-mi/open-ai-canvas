@@ -1,0 +1,20 @@
+.dark .feedback-environment-option .ant-checkbox-checked {
+    background: var(--control-selected-bg);
+    border-color: var(--control-selected-border);
+}
+
+.dark .feedback-environment-option .ant-checkbox-checked::after {
+    border-color: var(--control-selected-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dark .feedback-environment-option:hover .ant-checkbox-wrapper .ant-checkbox-checked:not(.ant-checkbox-disabled) {
+        background: var(--control-selected-hover-bg);
+        border-color: var(--control-selected-fg);
+    }
+}
+
+.dark .feedback-environment-option .ant-checkbox:has(.ant-checkbox-input:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--space-half);
+}

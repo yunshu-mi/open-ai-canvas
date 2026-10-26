@@ -182,14 +182,6 @@ type (
 	ImageSizePreset                        = app.ImageSizePreset
 	ImportProjectUnitsRequest              = app.ImportProjectUnitsRequest
 	InputConstraint                        = app.InputConstraint
-	LibTVImportRequest                     = app.LibTVImportRequest
-	LibTVImportResult                      = app.LibTVImportResult
-	LibTVCanvasConnection                  = app.LibTVCanvasConnection
-	LibTVCanvasNode                        = app.LibTVCanvasNode
-	LibTVImportIssue                       = app.LibTVImportIssue
-	LibTVImportMetadata                    = app.LibTVImportMetadata
-	LibTVImportWarning                     = app.LibTVImportWarning
-	LibTVSettingRequest                    = app.LibTVSettingRequest
 	LinkCanvasUnitRequest                  = app.LinkCanvasUnitRequest
 	LinkProjectAssetRequest                = app.LinkProjectAssetRequest
 	LinkShotAssetRequest                   = app.LinkShotAssetRequest
@@ -255,7 +247,6 @@ type (
 	PublicDrawingEngineSetting             = app.PublicDrawingEngineSetting
 	PublicEmailSetting                     = app.PublicEmailSetting
 	PublicFeatureAvailability              = app.PublicFeatureAvailability
-	PublicLibTVSetting                     = app.PublicLibTVSetting
 	PublicLinuxDOSetting                   = app.PublicLinuxDOSetting
 	PublicLogicalModel                     = app.PublicLogicalModel
 	PublicLogicalModelPriceTier            = app.PublicLogicalModelPriceTier
@@ -330,13 +321,6 @@ type (
 	SystemPerformanceMemory                = app.SystemPerformanceMemory
 	SystemPerformanceRedis                 = app.SystemPerformanceRedis
 	SystemPerformanceRedisPool             = app.SystemPerformanceRedisPool
-	TapNowImportRequest                    = app.TapNowImportRequest
-	TapNowImportResult                     = app.TapNowImportResult
-	TapNowCanvasConnection                 = app.TapNowCanvasConnection
-	TapNowCanvasNode                       = app.TapNowCanvasNode
-	TapNowImportIssue                      = app.TapNowImportIssue
-	TapNowImportMetadata                   = app.TapNowImportMetadata
-	TapNowImportWarning                    = app.TapNowImportWarning
 	TaskBillingSummary                     = app.TaskBillingSummary
 	TaskClientContext                      = app.TaskClientContext
 	TaskListOptions                        = app.TaskListOptions

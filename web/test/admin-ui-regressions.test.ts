@@ -178,7 +178,7 @@ test("admin settings use full-width summaries without selected-card side stripes
 });
 
 test("task-first settings reveal dependent configuration only after the primary choice", async () => {
-    const [storageSource, emailSource, accessSource, featureSource, appearanceSource, welcomeSource, drawingSource, arkSource, interceptionSource, thirdPartySource, cssSource] = await Promise.all([
+    const [storageSource, emailSource, accessSource, featureSource, appearanceSource, welcomeSource, drawingSource, arkSource, interceptionSource, cssSource] = await Promise.all([
         Promise.resolve(moduleGroupSource("pages/admin/settings/storage-settings-page.tsx")),
         Bun.file(new URL("../src/pages/admin/components/email-settings-panel.tsx", import.meta.url)).text(),
         Bun.file(new URL("../src/pages/admin/components/access-settings-panel.tsx", import.meta.url)).text(),
@@ -188,7 +188,6 @@ test("task-first settings reveal dependent configuration only after the primary 
         Bun.file(new URL("../src/pages/admin/settings/drawing-engine-settings-page.tsx", import.meta.url)).text(),
         Bun.file(new URL("../src/pages/admin/settings/ark-private-assets-settings-page.tsx", import.meta.url)).text(),
         Bun.file(new URL("../src/pages/admin/settings/response-interception-settings-page.tsx", import.meta.url)).text(),
-        Bun.file(new URL("../src/pages/admin/settings/libtv-settings-page.tsx", import.meta.url)).text(),
         Bun.file(new URL("../src/styles/admin-ui.css", import.meta.url)).text(),
     ]);
 
@@ -227,14 +226,6 @@ test("task-first settings reveal dependent configuration only after the primary 
     expect(interceptionSource).toContain("{enabled ? (");
     expect(interceptionSource).not.toContain('className="admin-intercept-overview"');
     expect(sourceSection(interceptionSource, "const changeEnabled", "if (loading")).not.toContain("save(");
-
-    expect(thirdPartySource).toContain('title="1. 配置 LibTV 服务端访问凭据"');
-    expect(thirdPartySource).toContain('title="2. 是否开放用户导入 LibTV 画布"');
-    expect(thirdPartySource).toContain('title="3. 验证已保存的 LibTV 凭据"');
-    expect(thirdPartySource).toContain("{draftHasToken ? (");
-    expect(thirdPartySource).toContain("{setting.hasToken && !clearTokenDraft ? (");
-    expect(thirdPartySource).not.toContain('className="admin-third-party-overview"');
-    expect(sourceSection(thirdPartySource, "const changeEnabled", "const markTokenForRemoval")).not.toContain("save(");
 
     expect(compactSource(cssSource)).toContain(".admin-feature-board { width: 100%; max-width: none; grid-template-columns: minmax(0, 1fr);");
 });

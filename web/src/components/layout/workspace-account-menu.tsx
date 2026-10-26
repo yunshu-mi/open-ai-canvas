@@ -1,6 +1,6 @@
 import { Popover } from "antd";
 import { Switch } from "@/components/ui/base/switch";
-import { CircleUserRound, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -8,6 +8,7 @@ import { AppChangelogButton } from "@/components/layout/app-changelog-modal";
 import { WorkspaceAccountCard } from "./workspace-account-card";
 import { UserAvatar } from "./user-avatar";
 import { openWorkspaceWallet } from "@/lib/workspace-wallet";
+import { preloadAuthVideo } from "@/services/auth-video";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { useUserStore } from "@/stores/use-user-store";
 
@@ -51,5 +52,17 @@ export function WorkspaceAccountMenu() {
                 <UserAvatar user={user} className="size-6" />
             </button>
         </Popover></>
-    ) : <Link to="/login" className="inline-flex items-center gap-1.5 px-1.5 text-xs text-foreground/55" aria-label="登录" title="登录"><CircleUserRound className="size-5" /><span className="hidden sm:inline">游客</span></Link>;
+    ) : (
+        <Link
+            to="/login"
+            onPointerEnter={preloadAuthVideo}
+            onFocus={preloadAuthVideo}
+            onPointerDown={preloadAuthVideo}
+            className="app-workspace-topbar-login-button inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--r-full)] border border-[var(--user-border)] bg-[var(--user-surface)] px-3 text-[length:var(--fs-caption)] font-medium text-[var(--user-ink)] hover:border-[var(--user-border-strong)] hover:bg-[var(--user-surface-hover)] active:bg-[var(--user-control-pressed)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--user-accent)]"
+            aria-label="登录"
+            title="登录"
+        >
+            登录
+        </Link>
+    );
 }

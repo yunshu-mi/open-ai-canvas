@@ -579,13 +579,6 @@ html:not(.dark) .creation-history-drawer-root {
     box-shadow: none !important;
 }
 
-/* Modal 关闭后会把焦点还给触发按钮；收窄该按钮的键盘焦点环，避免出现持续的粗灰边。 */
-.canvas-topbar-import-button:focus-visible {
-    outline: 1px solid color-mix(in srgb, var(--foreground) 55%, transparent) !important;
-    outline-offset: 1px !important;
-    box-shadow: none !important;
-}
-
 :where([class*="card"], [class*="Card"]):focus:not(:focus-visible),
 :where([class*="card"], [class*="Card"]):has(:focus:not(:focus-visible)) {
     outline: none !important;

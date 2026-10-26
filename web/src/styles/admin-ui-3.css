@@ -164,507 +164,8 @@
     text-align: right;
 }
 
-.admin-third-party-settings {
-    padding-bottom: 24px;
-}
-
-.admin-third-party-settings .admin-settings-section {
-    border: 1px solid var(--admin-card-border);
-}
-
-.admin-third-party-settings .admin-settings-section-summary,
-.admin-third-party-settings .admin-settings-section-content {
-    background: var(--admin-layer-1);
-}
-
-.admin-third-party-command-bar {
-    position: sticky;
-    top: 0;
-    z-index: 24;
-    display: flex;
-    min-height: 62px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    border: 1px solid var(--admin-card-border);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--admin-layer-1) 96%, transparent);
-    padding: 11px 14px;
-    box-shadow: var(--admin-card-shadow);
-    backdrop-filter: blur(14px);
-    transition:
-        border-color 180ms ease,
-        background-color 180ms ease,
-        box-shadow 180ms ease;
-}
-
-.admin-third-party-command-bar.is-dirty {
-    border-color: color-mix(in srgb, var(--admin-status-warning) 34%, var(--admin-card-border));
-    background: color-mix(in srgb, var(--admin-status-warning) 6%, var(--admin-layer-1));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--admin-status-warning) 24%, transparent);
-}
-
-.admin-third-party-command-copy,
-.admin-third-party-command-actions,
-.admin-third-party-inline-alert,
-.admin-third-party-provider,
-.admin-third-party-provider-heading,
-.admin-third-party-provider-tags,
-.admin-third-party-domain-heading,
-.admin-third-party-policy-control,
-.admin-third-party-policy-switch,
-.admin-third-party-flow,
-.admin-third-party-flow-step,
-.admin-third-party-credential-state,
-.admin-third-party-credential-indicator,
-.admin-third-party-credential-actions,
-.admin-third-party-test-heading,
-.admin-third-party-test-controls,
-.admin-third-party-test-note,
-.admin-third-party-footer,
-.admin-third-party-footer-note,
-.admin-third-party-load-error,
-.admin-third-party-confirm-row {
-    display: flex;
-    align-items: center;
-}
-
-.admin-third-party-command-copy {
-    min-width: 0;
-    gap: 11px;
-}
-
-.admin-third-party-command-copy strong {
-    color: var(--admin-text-primary);
-    font-size: 13px;
-    font-weight: 650;
-}
-
-.admin-third-party-command-copy p {
-    margin-top: 2px;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.admin-third-party-command-icon,
-.admin-third-party-load-error-icon,
-.admin-third-party-domain-heading > span,
-.admin-third-party-test-heading > span {
-    display: grid;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-    background: var(--admin-layer-2);
-    color: var(--admin-text-secondary);
-}
-
-.admin-third-party-command-icon,
-.admin-third-party-load-error-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-}
-
-.admin-third-party-command-actions {
-    flex: 0 0 auto;
-    gap: 8px;
-}
-
-.admin-third-party-inline-alert {
-    gap: 8px;
-    border: 1px solid color-mix(in srgb, var(--admin-status-warning) 30%, var(--admin-card-border));
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--admin-status-warning) 7%, var(--admin-layer-1));
-    padding: 10px 12px;
-    color: color-mix(in srgb, var(--admin-status-warning) 78%, var(--admin-text-primary));
-    font-size: 12px;
-    line-height: 1.55;
-}
-
-.admin-third-party-overview {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    overflow: hidden;
-    border: 1px solid var(--admin-card-border);
-    border-radius: var(--r-lg);
-    background: var(--admin-layer-1);
-    box-shadow: var(--admin-card-shadow);
-}
-
-.admin-third-party-overview .admin-stat-tile {
-    min-height: 104px;
-    background: var(--admin-layer-1);
-    box-shadow: none;
-}
-
-.admin-third-party-overview .admin-stat-tile-value,
-.admin-third-party-overview .admin-stat-tile-detail {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.admin-third-party-overview .admin-stat-tile-value {
-    font-size: 20px;
-}
-
-.admin-third-party-provider {
-    min-height: 70px;
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid var(--admin-divider);
-    background: color-mix(in srgb, var(--admin-layer-2) 34%, var(--admin-layer-1));
-    padding: 13px 20px;
-}
-
-.admin-third-party-provider-heading {
-    min-width: 0;
-    gap: 11px;
-}
-
-.admin-third-party-provider-mark {
-    display: grid;
-    width: 36px;
-    height: 36px;
-    flex: 0 0 auto;
-    place-items: center;
-    border-radius: 9px;
-    background: var(--foreground);
-    color: var(--background);
-    font-size: 15px;
-    font-weight: 750;
-}
-
-.admin-third-party-provider-heading strong,
-.admin-third-party-domain-heading h3,
-.admin-third-party-test-heading h3 {
-    color: var(--admin-text-primary);
-    font-size: 13px;
-    font-weight: 650;
-}
-
-.admin-third-party-provider-heading p,
-.admin-third-party-domain-heading p,
-.admin-third-party-test-heading p {
-    margin-top: 2px;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    line-height: 1.55;
-}
-
-.admin-third-party-provider-tags {
-    flex: 0 0 auto;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 6px;
-}
-
-.admin-third-party-domain-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    padding: 16px 20px;
-}
-
-.admin-third-party-domain,
-.admin-third-party-test-section {
-    min-width: 0;
-    border: 1px solid var(--admin-card-border);
-    border-radius: 10px;
-    background: var(--admin-layer-2);
-}
-
-.admin-third-party-domain {
-    min-height: 254px;
-    padding: 16px;
-}
-
-.admin-third-party-domain-heading {
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.admin-third-party-domain-heading > span,
-.admin-third-party-test-heading > span {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: var(--admin-layer-1);
-}
-
-.admin-third-party-domain-heading > div,
-.admin-third-party-test-heading > div {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.admin-third-party-policy-control {
-    justify-content: space-between;
-    gap: 14px;
-    margin-top: 18px;
-    border: 1px solid var(--admin-card-border);
-    border-radius: 9px;
-    background: var(--admin-layer-1);
-    padding: 13px;
-}
-
-.admin-third-party-policy-control > div:first-child {
-    min-width: 0;
-}
-
-.admin-third-party-policy-control strong {
-    color: var(--admin-text-primary);
-    font-size: 12px;
-    font-weight: 650;
-}
-
-.admin-third-party-policy-control p {
-    margin-top: 3px;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.admin-third-party-policy-switch {
-    flex: 0 0 auto;
-    gap: 8px;
-}
-
-.admin-third-party-policy-switch > span {
-    color: var(--admin-text-secondary);
-    font-size: 11px;
-    font-weight: 650;
-}
-
-.admin-third-party-flow {
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 14px;
-    color: var(--admin-text-muted);
-}
-
-.admin-third-party-flow-step {
-    min-width: 0;
-    flex: 1 1 0;
-    gap: 8px;
-}
-
-.admin-third-party-flow-step > span {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 auto;
-    place-items: center;
-    border-radius: 7px;
-    background: color-mix(in srgb, var(--foreground) 6%, transparent);
-    color: var(--admin-text-secondary);
-}
-
-.admin-third-party-flow-step strong,
-.admin-third-party-flow-step small {
-    display: block;
-}
-
-.admin-third-party-flow-step strong {
-    overflow: hidden;
-    color: var(--admin-text-primary);
-    font-size: 11px;
-    font-weight: 650;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.admin-third-party-flow-step small {
-    margin-top: 1px;
-    color: var(--admin-text-muted);
-    font-size: 10px;
-}
-
-.admin-third-party-field-label,
-.admin-third-party-test-input label {
-    display: block;
-    color: var(--admin-text-secondary);
-    font-size: 11px;
-    font-weight: 650;
-}
-
-.admin-third-party-field-label {
-    margin: 17px 0 7px;
-}
-
-.admin-third-party-credential-state {
-    align-items: flex-start;
-    gap: 9px;
-    margin-top: 9px;
-}
-
-.admin-third-party-credential-indicator {
-    flex: 0 0 auto;
-    gap: 5px;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    font-weight: 650;
-}
-
-.admin-third-party-credential-indicator.is-ready {
-    color: var(--admin-status-success);
-}
-
-.admin-third-party-credential-indicator.is-warning {
-    color: var(--admin-status-warning);
-}
-
-.admin-third-party-credential-state p {
-    color: var(--admin-text-muted);
-    font-size: 10px;
-    line-height: 1.55;
-}
-
-.admin-third-party-credential-actions {
-    min-height: 32px;
-    justify-content: flex-end;
-    margin-top: 12px;
-}
-
-.admin-third-party-test-section {
-    margin: 0 20px 18px;
-    overflow: hidden;
-}
-
-.admin-third-party-test-heading {
-    min-height: 74px;
-    align-items: flex-start;
-    gap: 10px;
-    border-bottom: 1px solid var(--admin-divider);
-    background: var(--admin-layer-1);
-    padding: 14px 16px;
-}
-
-.admin-third-party-test-heading .admin-status-badge {
-    flex: 0 0 auto;
-}
-
-.admin-third-party-test-controls {
-    align-items: flex-end;
-    gap: 10px;
-    padding: 14px 16px 11px;
-}
-
-.admin-third-party-test-input {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.admin-third-party-test-input label {
-    margin-bottom: 7px;
-}
-
-.admin-third-party-test-note {
-    gap: 7px;
-    border-top: 1px solid var(--admin-divider);
-    padding: 10px 16px;
-    color: var(--admin-text-muted);
-    font-size: 10px;
-    line-height: 1.55;
-}
-
-.admin-third-party-test-note svg {
-    flex: 0 0 auto;
-}
-
-.admin-third-party-test-note.is-success {
-    color: var(--admin-status-success);
-}
-
-.admin-third-party-test-note.is-error {
-    color: var(--admin-status-error);
-}
-
-.admin-third-party-footer {
-    width: 100%;
-    justify-content: space-between;
-    gap: 14px;
-}
-
-.admin-third-party-footer-note {
-    min-width: 0;
-    gap: 7px;
-    color: var(--admin-text-muted);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.admin-third-party-footer-note svg {
-    flex: 0 0 auto;
-}
-
-.admin-third-party-load-error,
-.admin-third-party-loading-card {
-    min-height: 150px;
-    border: 1px solid var(--admin-card-border);
-    border-radius: 10px;
-    background: var(--admin-layer-1);
-    padding: 20px;
-    box-shadow: var(--admin-card-shadow);
-}
-
-.admin-third-party-load-error {
-    gap: 12px;
-}
-
-.admin-third-party-load-error > div {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.admin-third-party-load-error h2 {
-    color: var(--admin-text-primary);
-    font-size: 15px;
-    font-weight: 650;
-}
-
-.admin-third-party-load-error p,
-.admin-third-party-confirm-copy p {
-    margin-top: 4px;
-    color: var(--admin-text-muted);
-    font-size: 12px;
-    line-height: 1.65;
-}
-
-.admin-third-party-confirm-copy p + p {
-    margin-top: 8px;
-}
-
-.admin-third-party-confirm-row {
-    justify-content: space-between;
-    gap: 14px;
-    border: 1px solid var(--admin-card-border);
-    border-radius: 8px;
-    background: var(--admin-layer-2);
-    padding: 10px 12px;
-}
-
-.admin-third-party-confirm-row + .admin-third-party-confirm-row {
-    margin-top: 8px;
-}
-
-.admin-third-party-confirm-row span {
-    color: var(--admin-text-muted);
-    font-size: 11px;
-}
-
-.admin-third-party-confirm-row strong {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    color: var(--admin-text-primary);
-    font-size: 12px;
-    font-weight: 650;
-    text-align: right;
-}
-
 /* Task-first settings hierarchy: the page action is primary; sync metadata stays quiet. */
-:is(.admin-feature-command-bar, .admin-drawing-command-bar, .admin-access-command-bar, .admin-email-command-bar, .admin-storage-command-bar, .admin-ark-command-bar, .admin-intercept-command-bar, .admin-third-party-command-bar) {
+:is(.admin-feature-command-bar, .admin-drawing-command-bar, .admin-access-command-bar, .admin-email-command-bar, .admin-storage-command-bar, .admin-ark-command-bar, .admin-intercept-command-bar) {
     position: static;
     min-height: 42px;
     border: 0;
@@ -676,25 +177,25 @@
     backdrop-filter: none;
 }
 
-:is(.admin-feature-command-bar, .admin-drawing-command-bar, .admin-access-command-bar, .admin-email-command-bar, .admin-storage-command-bar, .admin-ark-command-bar, .admin-intercept-command-bar, .admin-third-party-command-bar).is-dirty {
+:is(.admin-feature-command-bar, .admin-drawing-command-bar, .admin-access-command-bar, .admin-email-command-bar, .admin-storage-command-bar, .admin-ark-command-bar, .admin-intercept-command-bar).is-dirty {
     border-color: color-mix(in srgb, var(--admin-status-warning) 42%, var(--admin-divider));
     background: transparent;
     box-shadow: none;
 }
 
-:is(.admin-feature-command-icon, .admin-drawing-command-icon, .admin-access-command-icon, .admin-email-command-icon, .admin-storage-command-icon, .admin-ark-command-icon, .admin-intercept-command-icon, .admin-third-party-command-icon) {
+:is(.admin-feature-command-icon, .admin-drawing-command-icon, .admin-access-command-icon, .admin-email-command-icon, .admin-storage-command-icon, .admin-ark-command-icon, .admin-intercept-command-icon) {
     display: none;
 }
 
-:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy, .admin-third-party-command-copy) {
+:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy) {
     gap: 0;
 }
 
-:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy, .admin-third-party-command-copy) strong {
+:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy) strong {
     font-size: 12px;
 }
 
-:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy, .admin-third-party-command-copy) p {
+:is(.admin-feature-command-copy, .admin-drawing-command-copy, .admin-access-command-copy, .admin-email-command-copy, .admin-storage-command-copy, .admin-ark-command-copy, .admin-intercept-command-copy) p {
     margin-top: 1px;
     font-size: 10px;
 }
@@ -704,8 +205,7 @@
 .admin-access-registration-section,
 .admin-access-linuxdo-section,
 .admin-access-agreement-section,
-.admin-intercept-policy-section,
-.admin-third-party-credential-section {
+.admin-intercept-policy-section {
     border-color: color-mix(in srgb, var(--foreground) 22%, var(--admin-card-border)) !important;
 }
 
@@ -714,17 +214,16 @@
 .admin-access-registration-section > .admin-settings-section-summary,
 .admin-access-linuxdo-section > .admin-settings-section-summary,
 .admin-access-agreement-section > .admin-settings-section-summary,
-.admin-intercept-policy-section > .admin-settings-section-summary,
-.admin-third-party-credential-section > .admin-settings-section-summary {
+.admin-intercept-policy-section > .admin-settings-section-summary {
     background: color-mix(in srgb, var(--foreground) 3%, var(--admin-layer-1));
 }
 
-:is(.admin-storage-mode-section, .admin-email-delivery-section, .admin-access-registration-section, .admin-access-linuxdo-section, .admin-access-agreement-section, .admin-intercept-policy-section, .admin-third-party-credential-section) > .admin-settings-section-summary h2 {
+:is(.admin-storage-mode-section, .admin-email-delivery-section, .admin-access-registration-section, .admin-access-linuxdo-section, .admin-access-agreement-section, .admin-intercept-policy-section) > .admin-settings-section-summary h2 {
     font-size: 16px;
     letter-spacing: -0.01em;
 }
 
-:is(.admin-storage-mode-section, .admin-email-delivery-section, .admin-access-registration-section, .admin-access-linuxdo-section, .admin-access-agreement-section, .admin-intercept-policy-section, .admin-third-party-credential-section) > .admin-settings-section-summary p {
+:is(.admin-storage-mode-section, .admin-email-delivery-section, .admin-access-registration-section, .admin-access-linuxdo-section, .admin-access-agreement-section, .admin-intercept-policy-section) > .admin-settings-section-summary p {
     max-width: 760px;
     margin-top: 5px;
     font-size: 12px;
@@ -779,39 +278,6 @@
     align-items: center;
     gap: 14px;
     padding: 18px 20px;
-}
-
-.admin-third-party-credential-panel {
-    max-width: 820px;
-    padding: 18px 20px 20px;
-}
-
-.admin-third-party-credential-panel .admin-third-party-field-label {
-    margin: 0 0 7px;
-}
-
-.admin-third-party-access-section .admin-third-party-policy-control {
-    min-height: 112px;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    padding: 18px 20px;
-}
-
-.admin-third-party-access-section .admin-third-party-flow {
-    margin: 0;
-    border-top: 1px solid var(--admin-divider);
-    background: color-mix(in srgb, var(--admin-layer-2) 42%, var(--admin-layer-1));
-    padding: 13px 20px 15px;
-}
-
-.admin-third-party-test-card .admin-third-party-test-controls {
-    padding: 18px 20px 14px;
-}
-
-.admin-third-party-test-card .admin-third-party-test-note {
-    padding: 11px 20px 13px;
 }
 
 .admin-feature-board {
@@ -956,22 +422,6 @@
 }
 
 @media (max-width: 1279px) {
-    .admin-third-party-overview {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .admin-third-party-overview .admin-stat-tile:nth-child(3) {
-        border-left: 0;
-        border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
-    }
-
-    .admin-third-party-overview .admin-stat-tile:nth-child(4) {
-        border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
-    }
-
-    .admin-third-party-domain-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
 
     .admin-access-command-bar {
         align-items: flex-start;
@@ -1095,16 +545,6 @@
         justify-content: flex-start;
     }
 
-    .admin-third-party-command-bar {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .admin-third-party-command-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
     .admin-intercept-overview {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1166,37 +606,33 @@
 
 @media (min-width: 1100px) and (max-width: 1279px) {
     .admin-access-command-bar,
-    .admin-email-command-bar,
-    .admin-storage-command-bar,
-    .admin-ark-command-bar,
-    .admin-intercept-command-bar,
-    .admin-third-party-command-bar,
-    .admin-runtime-policy-command-bar {
+.admin-email-command-bar,
+.admin-storage-command-bar,
+.admin-ark-command-bar,
+.admin-intercept-command-bar,
+.admin-runtime-policy-command-bar {
         align-items: center;
         flex-direction: row;
     }
 
     .admin-access-command-actions,
-    .admin-email-command-actions,
-    .admin-storage-command-actions,
-    .admin-ark-command-actions,
-    .admin-intercept-command-actions,
-    .admin-third-party-command-actions,
-    .admin-runtime-policy-command-actions {
+.admin-email-command-actions,
+.admin-storage-command-actions,
+.admin-ark-command-actions,
+.admin-intercept-command-actions,
+.admin-runtime-policy-command-actions {
         width: auto;
         justify-content: flex-end;
     }
 }
 
 @media (max-width: 720px) {
-    .admin-intercept-policy-control,
-    .admin-third-party-policy-control {
+    .admin-intercept-policy-control {
         align-items: stretch;
         flex-direction: column;
     }
 
-    .admin-intercept-policy-switch,
-    .admin-third-party-policy-switch {
+    .admin-intercept-policy-switch {
         align-self: flex-start;
     }
 
@@ -1221,66 +657,25 @@
     .admin-intercept-preview-grid {
         grid-template-columns: minmax(0, 1fr);
     }
-
-    .admin-third-party-provider {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .admin-third-party-provider-tags {
-        justify-content: flex-start;
-    }
-
-    .admin-third-party-credential-panel,
-    .admin-third-party-access-section .admin-third-party-policy-control,
-    .admin-third-party-test-card .admin-third-party-test-controls {
-        padding-inline: 16px;
-    }
-
-    .admin-third-party-access-section .admin-third-party-flow {
-        align-items: stretch;
-        flex-direction: column;
-        padding-inline: 16px;
-    }
-
-    .admin-third-party-flow > span[aria-hidden="true"] {
-        align-self: center;
-        transform: rotate(90deg);
-    }
-
-    .admin-third-party-test-controls {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .admin-third-party-test-controls > .ant-btn {
-        width: 100%;
-    }
-
-    .admin-third-party-footer {
-        align-items: flex-start;
-        flex-direction: column;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .admin-access-command-bar,
-    .admin-access-advanced > summary,
-    .admin-email-command-bar,
-    .admin-storage-command-bar,
-    .admin-storage-mode-choice,
-    .admin-ark-command-bar,
-    .admin-intercept-command-bar,
-    .admin-intercept-rule-row,
-    .admin-feature-command-bar,
-    .admin-feature-board-row,
-    .admin-feature-board-source-selector button,
-    .admin-feature-detail,
-    .admin-drawing-command-bar,
-    .admin-drawing-engine-choice,
-    .admin-runtime-policy-command-bar,
-    .admin-runtime-policy-index-links button,
-    .admin-third-party-command-bar {
+.admin-access-advanced > summary,
+.admin-email-command-bar,
+.admin-storage-command-bar,
+.admin-storage-mode-choice,
+.admin-ark-command-bar,
+.admin-intercept-command-bar,
+.admin-intercept-rule-row,
+.admin-feature-command-bar,
+.admin-feature-board-row,
+.admin-feature-board-source-selector button,
+.admin-feature-detail,
+.admin-drawing-command-bar,
+.admin-drawing-engine-choice,
+.admin-runtime-policy-command-bar,
+.admin-runtime-policy-index-links button {
         transition: none !important;
     }
 

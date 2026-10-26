@@ -1,12 +1,13 @@
 import { motion, useReducedMotion } from "motion/react";
 import { Tabs } from "antd";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { SiteComplianceFooter } from "@/components/layout/site-compliance-footer";
 import { aceternityMotion } from "@/lib/aceternity-motion";
+import { mountAuthVideo } from "@/services/auth-video";
 import { brandStudioLabel, useAppearanceStore } from "@/stores/use-appearance-store";
 import { useThemeStore } from "@/stores/use-theme-store";
 
@@ -57,12 +58,18 @@ export function AuthScene() {
     const activeTab = location.pathname === "/register" ? "register" : "login";
     const copy = recovery ? authCopy.recovery : activeTab === "register" ? authCopy.register : authCopy.login;
     const videoActive = Boolean(appearance.authVideoUrl && appearance.authVideoAutoplay && !reducedMotion);
+    const videoHost = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        if (!videoActive || !videoHost.current) return;
+        return mountAuthVideo(videoHost.current, appearance.authVideoUrl, appearance.authVideoPosterUrl || undefined);
+    }, [videoActive, appearance.authVideoUrl, appearance.authVideoPosterUrl]);
 
     return (
         <main className="auth-scene h-dvh min-h-0 overflow-y-auto lg:overflow-hidden">
             <div className="grid min-h-full lg:h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(520px,1fr)]">
                 <section className="auth-scene-hero relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:min-h-0" aria-label={`${appearance.brandName}品牌影片`}>
-                    {videoActive && appearance.authVideoUrl ? <video className="absolute inset-0 size-full object-cover" src={appearance.authVideoUrl} poster={appearance.authVideoPosterUrl || undefined} autoPlay muted loop playsInline preload="metadata" /> : appearance.authVideoPosterUrl && failedPosterURL !== appearance.authVideoPosterUrl ? <img className="absolute inset-0 size-full object-cover" src={appearance.authVideoPosterUrl} alt="" decoding="async" onError={() => setFailedPosterURL(appearance.authVideoPosterUrl)} /> : null}
+                    {videoActive ? <div ref={videoHost} className="absolute inset-0" aria-hidden="true" /> : appearance.authVideoPosterUrl && failedPosterURL !== appearance.authVideoPosterUrl ? <img className="absolute inset-0 size-full object-cover" src={appearance.authVideoPosterUrl} alt="" decoding="async" onError={() => setFailedPosterURL(appearance.authVideoPosterUrl)} /> : null}
                     <div aria-hidden className="auth-scene-hero-overlay absolute inset-0" />
                     <div aria-hidden className="auth-scene-video-blend absolute inset-y-0 right-0 hidden lg:block" />
                     <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-4 p-5 sm:p-7 lg:p-9">

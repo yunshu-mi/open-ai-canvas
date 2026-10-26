@@ -1,4 +1,4 @@
-import { buildLibTVVideoPreviewUrl } from "@/lib/canvas/libtv-import";
+import { buildLibTVVideoPreviewUrl } from "@/lib/canvas/libtv-media";
 import { CanvasNodeType, type CanvasNodeData } from "@/types/canvas";
 
 export type CanvasVideoPreviewReference = {
