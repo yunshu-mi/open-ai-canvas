@@ -1,6 +1,11 @@
-import { ArrowUpRight, Clapperboard, Layers3, Sparkles } from "lucide-react";
+import { ArrowUpRight, Clapperboard, Layers3, LoaderCircle, Sparkles } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import { agentCopy, type CanvasAppearance } from "@/lib/canvas/agent-appearance";
-import { CanvasAgentMascot } from "./canvas-agent-mascot";
+import { FluidOrb } from "@/components/ui/fluid-orb";
+import { live2DModelURL } from "@/services/api/appearance";
+import { AgentAvatarVideo } from "./agent-avatar-video";
+import { Live2DAvatar } from "./live2d-avatar";
+import { useAgentAvatar } from "./use-agent-avatar";
 
 type AgentWelcomeProps = {
     appearance: CanvasAppearance;
@@ -11,10 +16,18 @@ type AgentWelcomeProps = {
 };
 
 export function AgentWelcome({ appearance, nodeCount, onChooseSkill, onDraftPrompt }: AgentWelcomeProps) {
+    const { live, mediaURL, mediaError, onMediaError, loading } = useAgentAvatar();
+    const reducedMotion = Boolean(useReducedMotion());
     return (
         <section className="agent-welcome" aria-label="开始 Agent 创作">
             <div className="agent-welcome-intro">
-                <span className="agent-welcome-mascot" aria-hidden="true"><CanvasAgentMascot /></span>
+                <span className="agent-welcome-mascot" aria-hidden="true">
+                    {loading ? <LoaderCircle className="size-6 motion-safe:animate-spin" /> : live ? (
+                        <Live2DAvatar url={live2DModelURL(appearance.live2dResourceId, appearance.live2dEntry)} width={80} height={80} reducedMotion={reducedMotion} fallback={<FluidOrb size={80} />} />
+                    ) : mediaURL && !mediaError ? (
+                        <AgentAvatarVideo src={mediaURL} onError={onMediaError} />
+                    ) : <FluidOrb size={80} />}
+                </span>
                 <h2>{agentCopy(appearance.welcomeTitle, appearance.agentName)}</h2>
                 <p>{agentCopy(appearance.welcomeDescription, appearance.agentName)}</p>
             </div>

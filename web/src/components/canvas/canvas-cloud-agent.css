@@ -625,8 +625,11 @@
 }
 
 .agent-welcome-mascot {
-    display: block;
+    position: relative;
+    display: grid;
+    place-items: center;
     width: var(--space-20);
+    aspect-ratio: 1;
     margin: 0 auto var(--space-5);
 }
 
