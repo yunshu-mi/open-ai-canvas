@@ -1,0 +1,80 @@
+name: Automatic pull request
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automatic-pr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pull-request:
+    name: Create PR and enable auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const head = context.ref.slice('refs/heads/'.length);
+            const base = context.payload.repository.default_branch;
+            if (context.payload.deleted || head === base) return;
+
+            const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
+              owner, repo, basehead: `${base}...${head}`,
+            });
+            if (comparison.ahead_by === 0) {
+              core.info('No changes ahead of the default branch.');
+              return;
+            }
+
+            const { data: existing } = await github.rest.pulls.list({
+              owner, repo, state: 'open', base, head: `${owner}:${head}`,
+            });
+            let pullRequest = existing[0];
+            if (!pullRequest) {
+              const { data: created } = await github.rest.pulls.create({
+                owner, repo, base, head,
+                title: (context.payload.head_commit?.message.split('\n')[0] || head).slice(0, 256),
+                body: [
+                  '开发分支推送后自动创建此 PR；后续推送复用同一个 PR。',
+                  '',
+                  '必须通过 `PR validation` 汇总检查并满足主分支保护规则后，才会自动 squash 合并。',
+                  '质量检查涵盖部署配置、Agent 静态检查、后端、支付插件和前端。',
+                  '',
+                  `触发工作流：${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+                ].join('\n'),
+              });
+              pullRequest = created;
+            }
+            core.notice(`Pull request: ${pullRequest.html_url}`);
+            if (pullRequest.draft) {
+              core.info('Draft PR stays open until marked ready for review.');
+              return;
+            }
+
+            const { repository } = await github.graphql(`
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) { autoMergeRequest { enabledAt } }
+                }
+              }
+            `, { owner, repo, number: pullRequest.number });
+            if (!repository.pullRequest.autoMergeRequest) {
+              await github.graphql(`
+                mutation($id: ID!) {
+                  enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
+                    pullRequest { number }
+                  }
+                }
+              `, { id: pullRequest.node_id });
+            }
