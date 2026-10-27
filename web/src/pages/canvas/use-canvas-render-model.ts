@@ -418,4 +418,3 @@ export function useCanvasRenderModel({
         renderViewBounds: renderBounds.view,
     };
 }
-
