@@ -8,7 +8,7 @@ let now = 100_000;
 let fail = false;
 const clock = spyOn(Date, "now").mockImplementation(() => now);
 mock.module("../../src/services/api/resources", () => ({
-    resourceIdFromStorageKey: (key?: string) => key?.startsWith("resource:") ? key.slice(9) : "",
+    resourceIdFromStorageKey: (key?: string) => (key?.startsWith("resource:") ? key.slice(9) : ""),
     resolveResourceAccessURL: (url: string) => url,
     getResourceAccess: async (_key: string, _purpose: string, _variant: string, _name: string, options: { forceRefresh: boolean }) => {
         calls.push(options.forceRefresh);
@@ -36,11 +36,20 @@ test("重复引用合并请求，到期自动刷新，错误强刷有冷却，�
     const host = document.createElement("div");
     const root = createRoot(host);
     try {
-        await act(async () => root.render(<><Preview /><Preview /></>));
+        await act(async () =>
+            root.render(
+                <>
+                    <Preview />
+                    <Preview />
+                </>,
+            ),
+        );
         expect(calls).toEqual([false]);
         expect(host.querySelector("img")?.src).toBe("https://example.test/preview-1");
         now += 1_001;
-        await act(async () => { await Bun.sleep(1_100); });
+        await act(async () => {
+            await Bun.sleep(1_100);
+        });
         expect(calls).toEqual([false, false]);
         await act(async () => reportResourcePreviewFailure("https://example.test/preview-2"));
         expect(calls).toEqual([false, false, true]);
@@ -49,7 +58,9 @@ test("重复引用合并请求，到期自动刷新，错误强刷有冷却，�
         expect(calls).toHaveLength(3);
         now += 30_001;
         fail = true;
-        await act(async () => { await Bun.sleep(1_100); });
+        await act(async () => {
+            await Bun.sleep(1_100);
+        });
         expect(host.querySelector("img")?.src).toBe("https://example.test/fallback");
     } finally {
         await act(async () => root.unmount());
