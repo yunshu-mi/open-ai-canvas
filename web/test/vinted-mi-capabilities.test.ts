@@ -26,7 +26,12 @@ test("三个模型的纯文字请求可以通过创作页模型选择", () => {
         const capabilityConfig = defaultModelCapabilityConfig("200t-vinted-mi", model);
         expect(capabilityConfig.video!.operations).toContain("text_to_video");
         expect(capabilityConfig.video!.defaultOperation).toBe("text_to_video");
-        const channel = createModelChannel({ id: "vinted", models: [model], interfaceType: "200t-vinted-mi", modelCosts: [{ model, capability: "video", protocol: "200t-vinted-mi", billingMode: "fixed_request", unitPriceMicrocredits: 0, capabilityConfig }] });
+        const channel = createModelChannel({
+            id: "vinted",
+            models: [model],
+            interfaceType: "200t-vinted-mi",
+            modelCosts: [{ model, capability: "video", protocol: "200t-vinted-mi", billingMode: "fixed_request", unitPriceMicrocredits: 0, capabilityConfig }],
+        });
         const config = { ...defaultConfig, channels: [channel] };
         expect(modelCompatibilityError(config, `vinted::${model}`, { capability: "video", input: { textCount: 1, imageCount: 0, videoCount: 0, audioCount: 0, characterCount: 0 } })).toBe("");
     }
