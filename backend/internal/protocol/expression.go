@@ -77,6 +77,90 @@ func evaluateManifestOperator(operator string, operand any, env map[string]any) 
 		return manifestPathValue(env, path), nil
 	case "$literal":
 		return operand, nil
+	case "$get":
+		args, ok := operand.([]any)
+		if !ok || len(args) != 2 {
+			return nil, fmt.Errorf("$get requires [object, key]")
+		}
+		object, err := evaluateManifestValue(args[0], env)
+		if err != nil {
+			return nil, err
+		}
+		key, err := evaluateManifestValue(args[1], env)
+		if err != nil {
+			return nil, err
+		}
+		if object == nil || key == nil {
+			return nil, nil
+		}
+		fields, ok := object.(map[string]any)
+		name, valid := key.(string)
+		if !ok || !valid {
+			return nil, fmt.Errorf("$get requires an object and a string key")
+		}
+		return fields[name], nil
+	case "$object":
+		spec, ok := operand.(map[string]any)
+		if !ok || spec["value"] == nil {
+			return nil, fmt.Errorf("$object requires from and value")
+		}
+		from, err := evaluateManifestValue(spec["from"], env)
+		if err != nil {
+			return nil, err
+		}
+		alias := strings.TrimSpace(manifestString(spec["as"]))
+		if alias == "" {
+			alias = "item"
+		}
+		items, keys := []any{}, []string{}
+		switch source := from.(type) {
+		case nil:
+		case []any:
+			items = source
+			for i := range source {
+				keys = append(keys, strconv.Itoa(i))
+			}
+		case map[string]any:
+			for key := range source {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				items = append(items, source[key])
+			}
+		default:
+			return nil, fmt.Errorf("$object from must be an object or array")
+		}
+		result := map[string]any{}
+		for i, item := range items {
+			child := cloneManifestEnv(env)
+			child[alias], child[alias+"Key"], child[alias+"Index"] = item, keys[i], i
+			key := any(keys[i])
+			if spec["key"] != nil {
+				key, err = evaluateManifestValue(spec["key"], child)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if key == nil {
+				continue
+			}
+			name, ok := key.(string)
+			if !ok || strings.TrimSpace(name) == "" {
+				return nil, fmt.Errorf("$object key must be a nonempty string")
+			}
+			value, err := evaluateManifestValue(spec["value"], child)
+			if err != nil {
+				return nil, err
+			}
+			if value != nil {
+				if _, exists := result[name]; exists {
+					return nil, fmt.Errorf("$object contains duplicate keys")
+				}
+				result[name] = value
+			}
+		}
+		return result, nil
 	case "$matches":
 		args, ok := operand.([]any)
 		if !ok || len(args) != 2 {

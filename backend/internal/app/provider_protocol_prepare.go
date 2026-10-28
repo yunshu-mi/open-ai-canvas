@@ -85,16 +85,23 @@ func prepareProtocolRequest(ctx context.Context, input canvasGenerationInput, ad
 	defer delete(request.Extra, "prepareItem")
 	for _, step := range lifecycle.Prepare {
 		count := 1
-		var images []protocol.MediaReference
-		if step.Source == "images" {
-			images = append(images, request.Images...)
-			sort.SliceStable(images, func(i, j int) bool { return images[i].Order < images[j].Order })
-			count = len(images)
+		var media []protocol.MediaReference
+		switch step.Source {
+		case "images":
+			media = append(media, request.Images...)
+		case "videos":
+			media = append(media, request.Videos...)
+		case "audios":
+			media = append(media, request.Audios...)
+		}
+		if step.Source != "" {
+			sort.SliceStable(media, func(i, j int) bool { return media[i].Order < media[j].Order })
+			count = len(media)
 		}
 		items := make([]any, 0, count)
 		for i := 0; i < count; i++ {
-			if step.Source == "images" {
-				request.Extra["prepareItem"] = map[string]any{"dataUrl": images[i].DataURL, "url": images[i].URL}
+			if step.Source != "" {
+				request.Extra["prepareItem"] = map[string]any{"dataUrl": media[i].DataURL, "url": media[i].URL, "name": media[i].Name, "role": media[i].Role}
 			}
 			spec, err := preparer.BuildPreparation(ctx, step, *request)
 			if err != nil {

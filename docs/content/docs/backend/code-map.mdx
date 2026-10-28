@@ -5,6 +5,18 @@ description: 从产品功能快速定位主要代码入口
 
 # 代码功能地图
 
+## 视频插件清理与通用下载
+
+- Vinted 文生视频映射：前后端默认能力声明 `text_to_video`；`model_capability.go` 只修正完整匹配旧错误默认值的已保存配置，目录发布、路由规格与任务准入复用归一化结果。`vinted_mi_video_test.go` 覆盖无素材请求的 `references`/`text` 线协议以及旧默认修正与自定义限制保留，前端 `vinted-mi-capabilities.test.ts` 回归模型选择。
+
+- Vinted 模型发现：`channel_model_catalog.go` 在统一鉴权与出站链路中分派目录；`channel_model_catalog_vinted.go` 精确匹配供应商域名及解析 `/v1/catalog`，只返回当前插件支持的可用模型。`channel_model_catalog_vinted_test.go` 覆盖目录状态、域名匹配、管理员预览、选择导入、去重与定价边界。
+
+- Vinted 实时映射：`internal/protocol/expression.go` 的 `$get` / `$object` 处理动态 JSON 字段，`preparation.go` 的 `expiresAt` 校验目录有效期；`vinted_mi_video_test.go` 覆盖三个模型的共用引用数组、画质字段改名、默认值和未声明字段裁剪。
+
+- `200t.vinted.mi`：`plugin-packages/generate-catalog.mjs` 定义请求及生命周期，`plugin-packages/200t.vinted.mi/` 保存清单和接口说明，分发包为同名 `.yingce-plugin`。宿主 `provider_protocol_prepare.go` 支持图片、视频、音频逐个上传；`provider_protocol_result.go` 支持 `anonymousResult` 签名下载及失效换签。模型默认能力在前后端 `model_capability_defaults.go` / `model-capabilities.ts`，回归在 `vinted_mi_video_test.go` / `vinted-mi-capabilities.test.ts`。
+
+- 视频插件移除后的启动清理回归：`backend/internal/app/removed_video_plugins_test.go`；保留的通用原片下载回归：`backend/internal/app/protocol_original_download_test.go`。
+
 ## 短剧自动制作
 
 - 纯逻辑：`backend/internal/production/`（作品圣经、分集与剧本提示词 `prompts.go`，模型输出解析 `parse.go`，分镜规则与时长 `storyboard.go` / `timing.go`，按视频模型上限切剧情段 `SegmentShotsForVideo`，段提示词素材稿 `segment_prompt.go` 与撰写要求 `segment_writer.go`，参考图方案 `assets.go`，用户分镜表直接导入 `storyboard_import.go`，原文台词逐句核对 `dialogue_check.go`）。

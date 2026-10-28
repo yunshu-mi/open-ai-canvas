@@ -249,8 +249,10 @@ func executeProtocolBinaryRequestWithConsumer(ctx context.Context, config provid
 		req.Header.Set(name, value)
 	}
 	ApplyOutboundHeaders(req, config.Headers)
-	if key := spec.Headers["Idempotency-Key"]; key != "" {
-		req.Header.Set("Idempotency-Key", key)
+	for _, name := range []string{"Idempotency-Key", "Expected-Quote-Id"} {
+		if value := spec.Headers[name]; value != "" {
+			req.Header.Set(name, value)
+		}
 	}
 	if err := applyProtocolAuth(req, config, spec.Auth); err != nil {
 		return nil, "", err

@@ -369,12 +369,13 @@ type ManifestProvider struct {
 
 // Lifecycle describes preparation and delivery without executing plugin code.
 type ManifestLifecycle struct {
-	Prepare        []ManifestPreparation         `json:"prepare,omitempty"`
-	MediaLimits    map[string]ManifestMediaLimit `json:"mediaLimits,omitempty"`
-	CreateAttempts int                           `json:"createAttempts,omitempty"`
-	PollIntervalMS int                           `json:"pollIntervalMs,omitempty"`
-	OriginalMP4    bool                          `json:"originalMp4,omitempty"`
-	RequestBytes   int64                         `json:"requestBytes,omitempty"`
+	Prepare         []ManifestPreparation         `json:"prepare,omitempty"`
+	MediaLimits     map[string]ManifestMediaLimit `json:"mediaLimits,omitempty"`
+	CreateAttempts  int                           `json:"createAttempts,omitempty"`
+	PollIntervalMS  int                           `json:"pollIntervalMs,omitempty"`
+	OriginalMP4     bool                          `json:"originalMp4,omitempty"`
+	AnonymousResult bool                          `json:"anonymousResult,omitempty"`
+	RequestBytes    int64                         `json:"requestBytes,omitempty"`
 }
 
 type ManifestMediaLimit struct {
@@ -385,6 +386,7 @@ type ManifestMediaLimit struct {
 
 type ManifestPreparation struct {
 	ID          string               `json:"id"`
+	ExpiresAt   any                  `json:"expiresAt,omitempty"`
 	Source      string               `json:"source,omitempty"`
 	Operation   ManifestOperation    `json:"operation"`
 	Value       any                  `json:"value"`

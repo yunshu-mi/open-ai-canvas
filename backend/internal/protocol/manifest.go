@@ -359,7 +359,7 @@ func ValidateManifest(manifest Manifest) error {
 			}
 			seen := map[string]bool{}
 			for _, step := range lifecycle.Prepare {
-				if step.ID == "" || seen[step.ID] || strings.ContainsAny(step.ID, ".[]") || (step.Source != "" && step.Source != "images") {
+				if step.ID == "" || seen[step.ID] || strings.ContainsAny(step.ID, ".[]") || (step.Source != "" && step.Source != "images" && step.Source != "videos" && step.Source != "audios") {
 					return fmt.Errorf("provider %q preparation id or source is invalid", provider.ID)
 				}
 				seen[step.ID] = true

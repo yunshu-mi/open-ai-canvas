@@ -170,22 +170,6 @@ func DefaultModelCapabilityConfigForModel(protocol string, modelName string) *Mo
 		DefaultOperation:  "text_to_video",
 	}
 	switch model.ChannelInterfaceType(protocol) {
-	case "vinted-seedance-video":
-		is25 := modelName == "seedance2.5"
-		video.References.PromptMaxChars = 15000
-		video.References.MaxImages, video.References.MaxVideos, video.References.MaxAudios = 9, 3, 3
-		if is25 {
-			video.References.MaxImages, video.References.MaxVideos, video.References.MaxAudios = 30, 10, 10
-		}
-		video.References.MaxImageBytes, video.References.MaxVideoBytes, video.References.MaxAudioBytes = 50<<20, 50<<20, 50<<20
-		video.Duration = VideoDurationConfig{Selection: "enum", Values: []int{5, 10, 15}, Default: 5}
-		if is25 {
-			video.Duration = VideoDurationConfig{Selection: "range", Min: 16, Max: 30, Step: 1, Default: 30}
-		} else if modelName == "seedance2.0mini" {
-			video.Duration.Values = []int{5, 10}
-		}
-		video.Resolutions = []string{"720p"}
-		video.Operations = append(video.Operations, "reference_to_video", "audio_to_video")
 	case model.ChannelInterfaceVolcengineJiMengVideo:
 		video.Duration = VideoDurationConfig{Selection: "enum", Values: []int{5, 10}, Default: 5}
 		video.Resolutions = []string{"720p"}
@@ -244,6 +228,31 @@ func DefaultModelCapabilityConfigForModel(protocol string, modelName string) *Mo
 		video.Watermark = VideoBooleanConfig{}
 		video.Operations, video.DefaultOperation = []string{VideoProcessingOperationEnhance}, VideoProcessingOperationEnhance
 		video.Processing = &VideoProcessingConfig{FPSPolicy: VideoProcessingFPSKeepSource, MaxSourceSeconds: DefaultVideoProcessingMaxSourceSeconds}
+	}
+	if protocol == "200t-vinted-mi" {
+		c4, deal := modelName == "multiref:sd-2-c4", modelName == "qsqs:wan3-720p-deal"
+		video.References = VideoReferenceConfig{PromptMaxChars: 6000, MaxImages: 10, MaxImageBytes: 10 * 1024 * 1024, MaxVideos: 5, MaxVideoBytes: 50 * 1024 * 1024, MaxVideoDuration: 15, MaxAudios: 5, MaxAudioBytes: 50 * 1024 * 1024, MaxAudioDuration: 15}
+		video.Duration = VideoDurationConfig{Selection: "range", Min: 4, Max: 30, Step: 1, Default: 4}
+		video.Ratios, video.DefaultRatio = []string{"adaptive", "9:16", "16:9", "1:1", "3:4", "4:3"}, "adaptive"
+		video.Resolutions, video.DefaultResolution = []string{"480p", "720p", "1080p"}, "1080p"
+		video.GenerateAudio = VideoBooleanConfig{Supported: true, Default: true}
+		// references 是上游模式名，当前 C4/阿里 Wan3 的 schema 允许只传 prompt。
+		video.Operations, video.DefaultOperation = []string{"text_to_video", "image_to_video", "reference_to_video", "audio_to_video"}, "text_to_video"
+		if c4 || deal {
+			video.Resolutions, video.DefaultResolution = []string{"720p"}, "720p"
+			video.Ratios, video.DefaultRatio = []string{"16:9", "9:16"}, "16:9"
+			video.GenerateAudio = VideoBooleanConfig{}
+		}
+		if c4 {
+			video.References.MaxImages, video.References.MaxVideos, video.References.MaxAudios = 9, 3, 3
+			video.Duration.Max = 15
+			video.Ratios = append(video.Ratios, "1:1")
+		}
+		if deal {
+			video.References.PromptMaxChars = 10000
+			video.References.MaxVideos, video.References.MaxVideoBytes, video.References.MaxVideoDuration, video.References.MaxAudioDuration = 0, 0, 0, 0
+			video.Duration = VideoDurationConfig{Selection: "enum", Values: []int{5, 10, 15, 30}, Default: 30}
+		}
 	}
 	return &ModelCapabilityConfig{Version: 1, Text: text, Image: DefaultImageCapabilityConfig(protocol, modelName), Video: video}
 }

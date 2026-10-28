@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"yingce/backend/internal/model"
@@ -358,7 +359,21 @@ func normalizeLegacyImageResolutionRequest(protocol string, capability *ModelCap
 }
 
 func applyModelSpecificVideoCapability(profile *VideoCapabilityConfig, protocol string, modelName string) *VideoCapabilityConfig {
-	if profile == nil || model.ChannelInterfaceType(strings.TrimSpace(protocol)) != model.ChannelInterfaceAgnesVideo {
+	if profile == nil {
+		return profile
+	}
+	if strings.TrimSpace(protocol) == "200t-vinted-mi" && (modelName == "multiref:sd-2-c4" || modelName == "multiref:ali-wan3") {
+		// 仅修正此前完整的错误默认配置，管理员改过的能力和限制保持原样。
+		current := DefaultModelCapabilityConfigForModel(protocol, modelName).Video
+		previous := *current
+		previous.Operations = []string{"image_to_video", "reference_to_video", "audio_to_video"}
+		previous.DefaultOperation = "reference_to_video"
+		if reflect.DeepEqual(profile, &previous) {
+			return current
+		}
+		return profile
+	}
+	if model.ChannelInterfaceType(strings.TrimSpace(protocol)) != model.ChannelInterfaceAgnesVideo {
 		return profile
 	}
 	normalizedModel := strings.ToLower(strings.TrimSpace(modelName))
