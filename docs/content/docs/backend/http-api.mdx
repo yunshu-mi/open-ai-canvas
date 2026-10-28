@@ -152,6 +152,10 @@ handle 放错端点、格式错误或行 ID 不存在时，工具错误回执提
 
 存储空间商品与积分商品共用 `/api/payments/*` 和 `/api/admin/payments/products`。商品和订单增加 `kind`/`productKind`（`credits`|`storage`）、`storageBytes`、`storageDurationDays`。`/payments/providers` 与下单不再要求积分功能；积分功能关闭时，`/payments/products` 只返回存储空间商品，积分商品下单返回功能未开启。商品类型创建后不能修改。
 
+## 渠道模型目录拉取
+
+`POST /api/ai/models` 与系统渠道的模型预览、拉取及选择导入，在 Base URL 为 `vinted.cam` 根地址或 `/v1` 时读取上游 `GET /v1/catalog`，其余 OpenAI/Gemini 渠道保留原模型发现路径。Vinted 目录必须 `status=ready`、有非空 `revision` 且 `valid_until` 未过期，只返回 `200t.vinted.mi` 支持的三个精确 ID 中当前存在且 `available=true` 的模型。响应仍使用既有模型目录合同，不补缓存模型、不创建生成任务；导入仍默认未定价、未启用。
+
 ## AutoDL 视频画面规格配置
 
 渠道模型的 `capabilityConfig.video.resolutions` 与 `defaultResolution` 直接表示所选完整分辨率与默认值，始终生效；不再使用或返回 `customSizeEnabled`、`customScreenSpec`。AutoDL v2.3.0 未声明独立比例参数，因此 `ratios` 为空、`defaultRatio` 为空字符串，横竖与方形由完整分辨率标签表达。

@@ -3,9 +3,35 @@ package protocol
 import (
 	"context"
 	"encoding/base64"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestEvaluateManifestDynamicObject(t *testing.T) {
+	env := map[string]any{"schema": map[string]any{"duration": map[string]any{"default": float64(4)}, "save_audio": map[string]any{"default": false}, "omitted": map[string]any{}}, "overrides": map[string]any{"duration": float64(10)}, "field": "outer"}
+	result, err := evaluateManifestValue(map[string]any{"$object": map[string]any{
+		"from": map[string]any{"$ref": "schema"}, "as": "field",
+		"value": map[string]any{"$coalesce": []any{map[string]any{"$get": []any{map[string]any{"$ref": "overrides"}, map[string]any{"$ref": "fieldKey"}}}, map[string]any{"$ref": "field.default"}}},
+	}}, env)
+	if err != nil || !reflect.DeepEqual(result, map[string]any{"duration": float64(10), "save_audio": false}) || env["field"] != "outer" {
+		t.Fatalf("result=%#v err=%v env=%#v", result, err, env)
+	}
+	result, err = evaluateManifestValue(map[string]any{"$object": map[string]any{"from": []any{"references"}, "as": "field", "key": map[string]any{"$ref": "field"}, "value": []any{"asset-1", "asset-2"}}}, env)
+	if err != nil || !reflect.DeepEqual(result, map[string]any{"references": []any{"asset-1", "asset-2"}}) {
+		t.Fatalf("array object=%#v err=%v", result, err)
+	}
+	for _, template := range []any{
+		map[string]any{"$get": []any{"not-an-object", "key"}},
+		map[string]any{"$get": []any{map[string]any{}, float64(1)}},
+		map[string]any{"$object": map[string]any{"from": "not-an-array", "value": true}},
+		map[string]any{"$object": map[string]any{"from": []any{"a", "a"}, "as": "field", "key": map[string]any{"$ref": "field"}, "value": true}},
+	} {
+		if _, err := evaluateManifestValue(template, env); err == nil {
+			t.Fatalf("invalid dynamic expression accepted: %#v", template)
+		}
+	}
+}
 
 func TestEvaluateManifestSplitToFloatDivide(t *testing.T) {
 	env := map[string]any{"request": map[string]any{"aspectRatio": "1280x720"}}

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -145,6 +146,29 @@ func finishProtocolAdapterResult(ctx context.Context, input canvasGenerationInpu
 		}
 		if lifecycle := adapter.Metadata().Lifecycle; lifecycle != nil && lifecycle.OriginalMP4 {
 			return downloadProtocolOriginal(withProviderRequestKind(ctx, "download"), input.Config, reference.URL, &downloadState)
+		}
+		if lifecycle := adapter.Metadata().Lifecycle; lifecycle != nil && lifecycle.AnonymousResult {
+			base, err := url.Parse(input.Config.BaseURL)
+			if err != nil {
+				return nil, "", err
+			}
+			target, err := url.Parse(reference.URL)
+			if err != nil {
+				return nil, "", err
+			}
+			// 签名本身授予下载权限，同源文件也不得附带渠道密钥。
+			data, mimeType, err = getExternalBinary(withProviderRequestKind(ctx, "download"), base.ResolveReference(target).String())
+			if err != nil {
+				var httpErr providerHTTPError
+				if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusForbidden || httpErr.StatusCode == http.StatusUnauthorized) {
+					return nil, "", signedMediaLinkError{err}
+				}
+				return nil, "", err
+			}
+			if !protocolMediaFormatMatches("video/mp4", data) {
+				return nil, "", errors.New("签名下载未返回有效 MP4 文件")
+			}
+			return data, "video/mp4", nil
 		}
 		data, mimeType, err = protocolMediaBytesOnce(ctx, input.Config, reference)
 		if err == nil && strings.Contains(strings.ToLower(mimeType), "json") {

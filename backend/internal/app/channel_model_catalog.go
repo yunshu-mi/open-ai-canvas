@@ -126,6 +126,12 @@ func (s *Service) FetchChannelModelCatalog(ctx context.Context, actor *model.Use
 	}
 
 	target := apiURL(baseURL, "/models")
+	vintedCatalog := false
+	if apiFormat == "openai" {
+		if catalogURL := vintedModelCatalogURL(baseURL); catalogURL != "" {
+			target, vintedCatalog = catalogURL, true
+		}
+	}
 	if apiFormat == "gemini" {
 		if !strings.HasSuffix(strings.ToLower(baseURL), "/v1beta") {
 			baseURL += "/v1beta"
@@ -149,7 +155,14 @@ func (s *Service) FetchChannelModelCatalog(ctx context.Context, actor *model.Use
 	// 只代理固定的模型目录 GET；用户密钥仅用于本次请求，不写入数据库或日志。
 	data, _, err := doBinary(request)
 	if err != nil {
+		var httpErr providerHTTPError
+		if vintedCatalog && errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+			return nil, NewAppError(http.StatusBadGateway, "模型服务未提供 /v1/catalog 接口")
+		}
 		return nil, channelModelsUpstreamError(err)
+	}
+	if vintedCatalog {
+		return parseVintedModelCatalog(data)
 	}
 	var payload channelModelsPayload
 	if err := json.Unmarshal(data, &payload); err != nil {

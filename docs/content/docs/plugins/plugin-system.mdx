@@ -117,11 +117,19 @@ eagle-asset-connector.yingce-plugin
 
 Provider 的 `result` 可以返回二进制媒体或 JSON 签名地址。JSON 响应沿用同一 Provider 的 `response` 映射，必须解析为成功状态和对应媒体结果；随后由宿主下载并保存，下载重试会重新获取签名。相对结果 URL 按渠道 Base URL 解析，签名参数原样保留；跨源下载不携带渠道 Key 和自定义请求头，出站仍受 SSRF 校验。
 
-`vinted-seedance-video` 2.1.0 仅对应 [Vinted 视频文档](https://vinted.cam/developers) 的四个 Seedance 主模块模型。提交前读取目录、本人价格和余额，报价包含适用的原生人脸附加费并显示在任务进度；图片逐张自动上传，音视频以原始 Base64 提交，不要求资源有公网地址。默认能力与界面按四个模型分别限制时长、720p 和素材数量，视频设置提供运镜与原生人脸选项。
+官方插件目录已移除 `vinted-seedance-video`、`200t-seedance-video` 与 `vinted-video`，不再随版本分发。后端重启时会从插件注册表清理对应的旧官方记录；原有渠道需改用仍可用的协议。
 
-插件声明 `runtime.backend: declarative-lifecycle`，旧后端会拒绝安装，必须同步升级宿主。Provider 的 `lifecycle` 合同包括：`prepare`（同源操作、可选 images 遍历、响应断言与结果赋值）、`mediaLimits`（实际格式和字节数）、`requestBytes`（JSON 体积）、`createAttempts`（最多三次、必须有宿主幂等键）、`pollIntervalMs`（最长 60 秒）和 `originalMp4`（原片响应与续传校验）。准备结果仅存在本次执行内存的 `request.extra.preparation`，不执行包内脚本；任一准备步骤失败即停止生成。
+插件声明 `runtime.backend: declarative-lifecycle`，旧后端会拒绝安装，必须同步升级宿主。Provider 的 `lifecycle` 合同包括：`prepare`（同源操作、可选 images/videos/audios 遍历、响应断言与结果赋值）、`mediaLimits`（实际格式和字节数）、`requestBytes`（JSON 体积）、`createAttempts`（最多三次、必须有宿主幂等键）、`pollIntervalMs`（最长 60 秒）、`originalMp4`（原片响应与续传校验）及 `anonymousResult`（独立结果端点返回签名 URL 后匿名下载并校验 MP4 内容）。准备结果仅存在本次执行内存的 `request.extra.preparation`，不执行包内脚本；任一准备步骤失败即停止生成。
 
-原片获取要求签名 JSON 的 `quality` 与文件 `X-Video-Quality` 均为 `original`，并校验 MP4 内容特征；签名文件请求不附加渠道凭据。同次执行中用 Range/If-Range、ETag 和 Content-Range 验证续传，签名过期则重新获取原任务签名。创建瞬态错误或缺少任务 ID 时，使用相同操作编号和请求体重试；恢复已取得 ID 的任务只查询。进程重启且没有保存任务 ID 时仍沿用保守暂停规则，需要人工核对，不能自动新建订单。前端 Agent 审批尚不编辑厂商扩展参数，使用渠道模型默认值。完整字段与安装说明见 `plugin-packages/vinted-seedance-video/docs/interface.md`。
+`200t.vinted.mi` 是新的独立主视频插件，Provider ID 为 `200t-vinted-mi`，Base URL 为 `https://vinted.cam`。渠道可通过“拉取模型”从 `/v1/catalog` 发现 `multiref:sd-2-c4`、`multiref:ali-wan3`、`qsqs:wan3-720p-deal` 中当前存在且可用的模型；也可手工添加精确 ID。导入后由管理员配置协议、能力与价格，模型参数使用各自默认能力。插件按当前目录读取版本和可用性，完整请求报价后把 `quote_id` 绑定 `Expected-Quote-Id`，使用固定 `Idempotency-Key` 和完全相同的正文提交；拒绝价格变化时不会自动接受新报价。已受理任务只查询原编号，签名失效时重新获取同一任务地址。下载不携带渠道凭证，也不依赖旧原片质量响应头。素材上传到上游客户图库，插件不自动删除图库文件；图库容量由客户在上游管理。上游积分按次报价，与影策管理员配置的本地计费分开。
+
+`200t.vinted.mi` v1.1.0 按实时 `x-canvas-inputs` 将素材映射到输入字段；多种类型共用一个字段时保留引用顺序并合并数组。参数只从 `parameter_schema.properties` 构造，支持当前 `quality`/`resolution` 字段和显式默认值；高级参数放在 `providerOptions.200t-vinted-mi.parameters`，仅转发 schema 声明的键。上游报价仍负责最终字段、取值和组合校验；现有 UI 显示三个模型的已知默认配置，目录暂不可用不会删除插件的模型支持。
+
+v1.2.0 修正文生视频的业务能力映射：C4、阿里 Wan3 的当前 `input_schema` 仅必填 `prompt`，其 `references` 模式未要求附带素材，所以无素材请求也声明业务能力 `text_to_video`；实际仍发送 `input_mode=references`。Deal 无素材发送 `text`，有素材发送 `references`。模型选择和后端准入同步放开纯文字输入，参数与素材约束继续由实时目录及报价校验。已保存配置只有与此前错误默认值完整一致时才在读取时修正，管理员改过的限制保持原样；无需改写数据库或历史任务。
+
+声明式表达式新增 `$get: [object, key]`，只读取当前 JSON 对象中的精确动态键；`$object: {from, as, key?, value}` 遍历对象或数组生成对象，绑定 `as`、`asKey` 与 `asIndex`，忽略值为 null 的条目并拒绝重复键。准备步骤的 `expiresAt` 可从响应读取 RFC3339 截止时间，宿主拒绝缺失、无效或过期快照；本插件用其校验目录 `valid_until`。这些操作只处理 JSON 数据，不执行供应商返回的脚本或表达式。安装 v1.1.0 时须同步升级后端。
+
+声明 `originalMp4` 的 Provider 会校验签名 JSON 的 `quality`、文件 `X-Video-Quality` 和 MP4 内容特征；同次执行中使用 Range/If-Range、ETag 和 Content-Range 验证续传。创建瞬态错误或缺少任务 ID 时，使用相同操作编号和请求体重试；恢复已取得 ID 的任务只查询。进程重启且没有保存任务 ID 时仍沿用保守暂停规则，需要人工核对，不能自动新建订单。
 
 字段约束：
 
