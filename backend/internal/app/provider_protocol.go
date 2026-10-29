@@ -109,6 +109,9 @@ func runProtocolAdapterTaskWithPolicy(ctx context.Context, input canvasGeneratio
 					created, err = adapter.ParseCreate(ctx, body)
 				}
 			}
+			if err == nil && created.TaskID == "" {
+				created.TaskID, err = extractProviderTaskID(body)
+			}
 		}
 		if err != nil {
 			return nil, err
