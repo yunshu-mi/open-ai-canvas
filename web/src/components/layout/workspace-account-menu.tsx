@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { AppChangelogButton } from "@/components/layout/app-changelog-modal";
 import { WorkspaceAccountCard } from "./workspace-account-card";
 import { UserAvatar } from "./user-avatar";
+import { UserGroupAvatarRing } from "./user-group-badge";
 import { openWorkspaceWallet } from "@/lib/workspace-wallet";
 import { preloadAuthVideo } from "@/services/auth-video";
 import { useThemeStore } from "@/stores/use-theme-store";
@@ -49,7 +50,7 @@ export function WorkspaceAccountMenu() {
             )}
         >
             <button type="button" className="app-workspace-topbar-icon-button app-workspace-account-trigger" aria-label="账户菜单" title={user.displayName || user.username}>
-                <UserAvatar user={user} className="size-6" />
+                <UserGroupAvatarRing><UserAvatar user={user} className="size-6" /></UserGroupAvatarRing>
             </button>
         </Popover></>
     ) : (

@@ -136,13 +136,19 @@ type CreateResult struct {
 	Status  Status  `json:"status"`
 	Result  *Result `json:"result,omitempty"`
 	Message string  `json:"message,omitempty"`
+	// Stage 是上游给出的可读排队/生成阶段（如“候车 · 前面 3 条”），只用于展示。
+	Stage string `json:"stage,omitempty"`
+	// QueueAhead 是排在本任务前面的条数；-1 表示上游没有给出。
+	QueueAhead int `json:"queueAhead,omitempty"`
 }
 
 type PollResult struct {
-	TaskID  string  `json:"taskId,omitempty"`
-	Status  Status  `json:"status"`
-	Result  *Result `json:"result,omitempty"`
-	Message string  `json:"message,omitempty"`
+	TaskID     string  `json:"taskId,omitempty"`
+	Status     Status  `json:"status"`
+	Result     *Result `json:"result,omitempty"`
+	Message    string  `json:"message,omitempty"`
+	Stage      string  `json:"stage,omitempty"`
+	QueueAhead int     `json:"queueAhead,omitempty"`
 }
 
 type Result struct {
@@ -164,27 +170,31 @@ type Parameter struct {
 }
 
 type Metadata struct {
-	ID                      string             `json:"id"`
-	Version                 string             `json:"version"`
-	Name                    string             `json:"name"`
-	Vendor                  string             `json:"vendor"`
-	Description             string             `json:"description,omitempty"`
-	Categories              []Capability       `json:"categories"`
-	Scopes                  []Surface          `json:"scopes"`
-	Parameters              []Parameter        `json:"parameters,omitempty"`
-	ImageParameters         []ImageParameter   `json:"imageParameters,omitempty"`
-	Create                  string             `json:"-"`
-	Poll                    string             `json:"-"`
-	Cancel                  string             `json:"-"`
-	ContentType             string             `json:"-"`
-	Documentation           string             `json:"documentation,omitempty"`
-	LegacyAliases           []string           `json:"-"`
-	Enabled                 bool               `json:"enabled"`
-	Installable             bool               `json:"installable"`
-	Execution               string             `json:"-"`
-	RequiresPublicMediaURLs bool               `json:"-"`
-	UnavailableReason       string             `json:"-"`
-	Lifecycle               *ManifestLifecycle `json:"-"`
+	ID                      string           `json:"id"`
+	Version                 string           `json:"version"`
+	Name                    string           `json:"name"`
+	Vendor                  string           `json:"vendor"`
+	Description             string           `json:"description,omitempty"`
+	Categories              []Capability     `json:"categories"`
+	Scopes                  []Surface        `json:"scopes"`
+	Parameters              []Parameter      `json:"parameters,omitempty"`
+	ImageParameters         []ImageParameter `json:"imageParameters,omitempty"`
+	Create                  string           `json:"-"`
+	Poll                    string           `json:"-"`
+	Cancel                  string           `json:"-"`
+	ContentType             string           `json:"-"`
+	Documentation           string           `json:"documentation,omitempty"`
+	LegacyAliases           []string         `json:"-"`
+	Enabled                 bool             `json:"enabled"`
+	Installable             bool             `json:"installable"`
+	Execution               string           `json:"-"`
+	RequiresPublicMediaURLs bool             `json:"-"`
+	// DetachedPolling 表示上游可能排队数小时：提交后释放 worker，由任务调度按间隔回查原任务。
+	DetachedPolling bool `json:"-"`
+	// IdempotentCreate 表示 create 以宿主幂等键作为上游任务 ID，同一键重复提交不会重复扣费，可安全重试。
+	IdempotentCreate  bool               `json:"-"`
+	UnavailableReason string             `json:"-"`
+	Lifecycle         *ManifestLifecycle `json:"-"`
 	// Kind 区分生成类与处理类 provider；处理类以输入媒体为主体，不要求 prompt。
 	Kind ProviderKind `json:"kind,omitempty"`
 }
@@ -217,6 +227,7 @@ type Manifest struct {
 	// They are never serialized; provider execution is described only under
 	// contributes.providers.
 	Create          ManifestOperation      `json:"-"`
+	Upload          *ManifestUpload        `json:"-"`
 	Agent           *ManifestOperation     `json:"-"`
 	Poll            *ManifestOperation     `json:"-"`
 	Cancel          *ManifestOperation     `json:"-"`
@@ -353,11 +364,14 @@ type ManifestProvider struct {
 	Scopes                  []Surface              `json:"scopes"`
 	BaseURL                 string                 `json:"baseUrl,omitempty"`
 	RequiresPublicMediaURLs bool                   `json:"requiresPublicMediaUrls,omitempty"`
+	DetachedPolling         bool                   `json:"detachedPolling,omitempty"`
+	IdempotentCreate        bool                   `json:"idempotentCreate,omitempty"`
 	Auth                    ManifestAuth           `json:"auth,omitempty"`
 	Parameters              []Parameter            `json:"parameters,omitempty"`
 	ImageParameters         []ImageParameter       `json:"imageParameters,omitempty"`
 	Validations             []ManifestValidation   `json:"validations,omitempty"`
 	Create                  ManifestOperation      `json:"create"`
+	Upload                  *ManifestUpload        `json:"upload,omitempty"`
 	Agent                   *ManifestOperation     `json:"agent,omitempty"`
 	Poll                    *ManifestOperation     `json:"poll,omitempty"`
 	Cancel                  *ManifestOperation     `json:"cancel,omitempty"`
