@@ -115,7 +115,7 @@ export const AgentLauncher = memo(function AgentLauncher({
     const largeAvatar = live || media || bundleManifestLoading;
     // 收起后只留小圆球入口：不加载 Live2D / 动画，也不挡画布。位置以右下角为锚点，收起展开不跳位。
     const keepsAvatarSize = largeAvatar && !collapsed;
-    const height = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.max(40, Math.min(appearance.avatarHeight, viewport.height - 60, (viewport.width - 40) / aspectRatio)) : 76;
+    const height = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.max(40, Math.min((appearance.avatarHeight * 2) / 3, viewport.height - 60, (viewport.width - 40) / aspectRatio)) : 76;
     const width = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.round(height * aspectRatio) : 76;
     const { position, dragging, handlers } = useAgentLauncherPosition(onOpen, width, height);
     const showToggle = !hidden && (largeAvatar || collapsed);
@@ -143,7 +143,7 @@ export const AgentLauncher = memo(function AgentLauncher({
                 transition={{ duration: reducedMotion ? 0 : 0.18 }}
             >
                 {collapsed ? (
-                    <FluidOrb size={30} color="#7164f6" />
+                    <FluidOrb size={40} color="#7164f6" />
                 ) : live ? (
                     <Live2DAvatar
                         url={live2DModelURL(appearance.live2dResourceId, appearance.live2dEntry)}
@@ -196,7 +196,7 @@ export const AgentLauncher = memo(function AgentLauncher({
 });
 
 const AGENT_LAUNCHER_COLLAPSED_KEY = "canvas:agent-launcher-collapsed:v1";
-const AGENT_LAUNCHER_COLLAPSED_SIZE = 48;
+const AGENT_LAUNCHER_COLLAPSED_SIZE = 64;
 
 function readAgentLauncherCollapsed() {
     try {

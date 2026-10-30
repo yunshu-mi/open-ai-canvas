@@ -9,6 +9,8 @@ import { WelcomeSetting } from "@/pages/admin/settings/components/welcome-settin
 import { SkinThemeEditor } from "@/pages/admin/settings/components/skin-theme-editor";
 import { CanvasAppearanceEditor } from "./components/canvas-appearance-editor";
 import { UpdateAnnouncementEditor } from "./components/update-announcement-editor";
+import { CustomerServiceEditor } from "./components/customer-service-editor";
+import { DEFAULT_CUSTOMER_SERVICE, validateCustomerService, type CustomerServiceSetting } from "@/lib/customer-service";
 import { DEFAULT_UPDATE_ANNOUNCEMENT, normalizeUpdateAnnouncement, validateUpdateAnnouncement, type UpdateAnnouncement } from "@/lib/update-announcement";
 import { App, Button, Tabs, Form, Input } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -21,8 +23,8 @@ import { type DraftFiles, FILE_RULES, type ResetState } from "./appearance-setti
 
 export { type DraftFiles, FILE_RULES, type ResetState } from "./appearance-settings-parts";
 
-const EMPTY_FILES: DraftFiles = { logo: null, "logo-dark": null, video: null, poster: null };
-const EMPTY_RESETS: ResetState = { logo: false, "logo-dark": false, video: false, poster: false };
+const EMPTY_FILES: DraftFiles = { logo: null, "logo-dark": null, video: null, poster: null, "customer-service-qr": null };
+const EMPTY_RESETS: ResetState = { logo: false, "logo-dark": false, video: false, poster: false, "customer-service-qr": false };
 
 export default function AppearanceSettingsPage() {
     const { message, modal } = App.useApp();
@@ -31,6 +33,7 @@ export default function AppearanceSettingsPage() {
     const [brandName, setBrandName] = useState("");
     const [canvas, setCanvas] = useState<CanvasAppearance>(DEFAULT_CANVAS_APPEARANCE);
     const [updates, setUpdates] = useState<UpdateAnnouncement>(DEFAULT_UPDATE_ANNOUNCEMENT);
+    const [customerService, setCustomerService] = useState<CustomerServiceSetting>(DEFAULT_CUSTOMER_SERVICE);
     const [canvasUploading, setCanvasUploading] = useState(false);
     const [brandSlug, setBrandSlug] = useState("");
     const [authHeroTitle, setAuthHeroTitle] = useState("");
@@ -59,11 +62,13 @@ export default function AppearanceSettingsPage() {
         "logo-dark": useRef<HTMLInputElement>(null),
         video: useRef<HTMLInputElement>(null),
         poster: useRef<HTMLInputElement>(null),
+        "customer-service-qr": useRef<HTMLInputElement>(null),
     };
 
     const dirty =
         Boolean(setting) &&
         (JSON.stringify(updates) !== JSON.stringify(normalizeUpdateAnnouncement(setting?.updates)) ||
+            JSON.stringify(customerService) !== JSON.stringify(setting?.customerService) ||
             JSON.stringify(canvas) !== JSON.stringify(setting?.canvas || DEFAULT_CANVAS_APPEARANCE) ||
             canvasUploading ||
             brandName.trim() !== setting?.brandName ||
@@ -92,6 +97,7 @@ export default function AppearanceSettingsPage() {
         setBrandName(value.brandName);
         setCanvas(value.canvas || DEFAULT_CANVAS_APPEARANCE);
         setUpdates(normalizeUpdateAnnouncement(value.updates));
+        setCustomerService(value.customerService);
         setBrandSlug(value.brandSlug);
         setAuthHeroTitle(value.authHeroTitle);
         setAuthHeroDescription(value.authHeroDescription);
@@ -145,7 +151,7 @@ export default function AppearanceSettingsPage() {
         if (blocker.state !== "blocked") return;
         modal.confirm({
             title: "放弃站点及外观调整？",
-            content: "当前品牌、画布 Agent、更新公告、SEO、备案、皮肤或媒体配置尚未保存，离开后草稿会丢失。线上站点不会改变。",
+            content: "当前品牌、客服、画布 Agent、更新公告、SEO、备案、皮肤或媒体配置尚未保存，离开后草稿会丢失。线上站点不会改变。",
             okText: "放弃并离开",
             cancelText: "继续编辑",
             okButtonProps: { danger: true },
@@ -203,6 +209,7 @@ export default function AppearanceSettingsPage() {
         if (!setting || saving || restoring || canvasUploading) return;
         setCanvas(setting.canvas || DEFAULT_CANVAS_APPEARANCE);
         setUpdates(normalizeUpdateAnnouncement(setting.updates));
+        setCustomerService(setting.customerService);
         setBrandName(setting.brandName);
         setBrandSlug(setting.brandSlug);
         setAuthHeroTitle(setting.authHeroTitle);
@@ -234,7 +241,7 @@ export default function AppearanceSettingsPage() {
         }
         modal.confirm({
             title: "放弃调整并重新读取？",
-            content: "重新读取会丢弃当前品牌、画布 Agent、更新公告、SEO、备案、皮肤和待上传文件。",
+            content: "重新读取会丢弃当前品牌、客服、画布 Agent、更新公告、SEO、备案、皮肤和待上传文件。",
             okText: "放弃并刷新",
             cancelText: "继续编辑",
             okButtonProps: { danger: true },
@@ -246,7 +253,8 @@ export default function AppearanceSettingsPage() {
         if (!setting?.configured || saving || refreshing || restoring || canvasUploading) return;
         modal.confirm({
             title: "恢复影策默认品牌标识？",
-            content: "品牌名称、英文标识、Logo、画布 Agent 名称/文案/形象、更新公告、登录页文案、视频、封面、SEO、备案和皮肤主题会立即恢复为项目内置值；自定义公告会清空并关闭，展示原有更新日志。已上传文件仍保留在存储资源中，不会被删除。",
+            content:
+                "品牌名称、英文标识、Logo、客服、画布 Agent 名称/文案/形象、更新公告、登录页文案、视频、封面、SEO、备案和皮肤主题会立即恢复为项目内置值；客服会清空并关闭，自定义公告会清空并关闭，展示原有更新日志。已上传文件仍保留在存储资源中，不会被删除。",
             okText: "恢复默认",
             cancelText: "取消",
             okButtonProps: { danger: true },
@@ -273,6 +281,14 @@ export default function AppearanceSettingsPage() {
 
     const save = async () => {
         if (!setting || saving || restoring || canvasUploading) return;
+        const qrSlot = "customer-service-qr";
+        const nextCustomerService = { ...customerService, qrCodeResourceId: resets[qrSlot] ? "" : customerService.qrCodeResourceId };
+        const customerServiceError = validateCustomerService({ ...nextCustomerService, qrCodeResourceId: files[qrSlot] ? "pending-upload" : nextCustomerService.qrCodeResourceId });
+        if (customerServiceError) {
+            setActiveTab("customer-service");
+            message.error(customerServiceError);
+            return;
+        }
         const updatesError = validateUpdateAnnouncement(updates);
         if (updatesError) {
             setActiveTab("updates");
@@ -356,8 +372,9 @@ export default function AppearanceSettingsPage() {
                 "logo-dark": resets["logo-dark"] ? "" : setting.darkLogoResourceId,
                 video: resets.video ? "" : setting.authVideoResourceId,
                 poster: resets.poster ? "" : setting.authVideoPosterResourceId,
+                "customer-service-qr": nextCustomerService.qrCodeResourceId,
             };
-            for (const slot of ["logo", "logo-dark", "video", "poster"] as AppearanceAssetSlot[]) {
+            for (const slot of ["logo", "logo-dark", "video", "poster", "customer-service-qr"] as AppearanceAssetSlot[]) {
                 const file = files[slot];
                 if (!file) continue;
                 const resource = await uploadAppearanceAsset(slot, file);
@@ -367,6 +384,7 @@ export default function AppearanceSettingsPage() {
             const updated = await updateAdminAppearance({
                 canvas,
                 updates,
+                customerService: { ...nextCustomerService, qrCodeResourceId: ids[qrSlot] },
                 brandName: nextBrandName,
                 brandSlug: nextBrandSlug,
                 authHeroTitle: nextAuthHeroTitle,
@@ -792,6 +810,22 @@ export default function AppearanceSettingsPage() {
                             },
                             { key: "canvas", label: "画布配置", children: <CanvasAppearanceEditor value={canvas} onChange={setCanvas} disabled={saving || refreshing || restoring || canvasUploading} onUploading={setCanvasUploading} /> },
                             { key: "updates", label: "更新公告", children: <UpdateAnnouncementEditor value={updates} onChange={setUpdates} disabled={saving || refreshing || restoring || canvasUploading} onUploading={setCanvasUploading} /> },
+                            {
+                                key: "customer-service",
+                                label: "客服配置",
+                                children: (
+                                    <CustomerServiceEditor
+                                        value={customerService}
+                                        onChange={setCustomerService}
+                                        file={files["customer-service-qr"]}
+                                        removed={resets["customer-service-qr"]}
+                                        inputRef={inputRefs["customer-service-qr"]}
+                                        onSelect={selectFile}
+                                        onReset={resetAsset}
+                                        disabled={saving || refreshing || restoring || canvasUploading}
+                                    />
+                                ),
+                            },
                         ]}
                     />
                 </div>

@@ -3,8 +3,10 @@ import type { SkinDefinition } from "@/lib/skin-themes";
 import type { AgentAvatarBundleManifest, CanvasAppearance } from "@/lib/canvas/agent-appearance";
 import { apiBaseURL } from "@/services/api/request";
 import type { UpdateAnnouncement } from "@/lib/update-announcement";
+import type { CustomerServiceSetting, PublicCustomerService } from "@/lib/customer-service";
 
 export type PublicAppearance = {
+    customerService?: PublicCustomerService;
     updates?: UpdateAnnouncement;
     canvas?: CanvasAppearance;
     schemaVersion: number;
@@ -37,6 +39,7 @@ export type PublicAppearance = {
 };
 
 export type AdminAppearance = {
+    customerService: CustomerServiceSetting;
     updates?: UpdateAnnouncement;
     canvas?: CanvasAppearance;
     schemaVersion: number;
@@ -66,7 +69,7 @@ export type AdminAppearance = {
     updatedAt?: string;
 };
 
-export type AppearanceAssetSlot = "logo" | "logo-dark" | "video" | "poster";
+export type AppearanceAssetSlot = "logo" | "logo-dark" | "video" | "poster" | "customer-service-qr";
 export type AppearanceAssetUploadSlot = AppearanceAssetSlot;
 
 export type AppearanceResource = {
@@ -96,6 +99,7 @@ export async function updateAdminAppearance(
     input: Pick<
         AdminAppearance,
         | "brandName"
+        | "customerService"
         | "canvas"
         | "updates"
         | "brandSlug"

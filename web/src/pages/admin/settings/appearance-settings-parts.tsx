@@ -17,6 +17,7 @@ export const FILE_RULES: Record<AppearanceAssetSlot, { accept: string; maxBytes:
     "logo-dark": { accept: "image/png,image/jpeg,image/webp", maxBytes: 5 << 20, label: "深色模式 Logo" },
     poster: { accept: "image/png,image/jpeg,image/webp", maxBytes: 10 << 20, label: "视频封面" },
     video: { accept: "video/mp4,video/webm", maxBytes: 256 << 20, label: "品牌视频" },
+    "customer-service-qr": { accept: "image/png,image/jpeg,image/webp", maxBytes: 5 << 20, label: "客服二维码" },
 };
 
 export function AssetPicker({
@@ -57,7 +58,7 @@ export function AssetPicker({
                     选择文件
                 </Button>
                 <Button type="text" danger={configured || Boolean(file)} disabled={disabled || (!configured && !file)} onClick={() => onReset(slot)}>
-                    恢复原始
+                    {slot === "customer-service-qr" ? "移除二维码" : "恢复原始"}
                 </Button>
             </span>
         </div>

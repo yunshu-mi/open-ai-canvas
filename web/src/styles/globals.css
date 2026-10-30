@@ -16626,6 +16626,24 @@ html:not(.dark) .creation-home .creation-user-message-copy-wrap { box-shadow: 0 
     gap: var(--space-2);
 }
 
+/* 与 AntD 链接规则同处未分层样式，避免按钮配色被默认透明背景覆盖。 */
+.app-user-workspace .app-workspace-topbar-login-button {
+    --topbar-login-bg: #4D8DFF;
+    --topbar-login-hover-bg: #6AA2FF;
+    --topbar-login-active-bg: #3574D9;
+    --topbar-login-fg: var(--color-neutral-0);
+    background: var(--topbar-login-bg);
+    color: var(--topbar-login-fg);
+}
+
+.app-user-workspace .app-workspace-topbar-login-button:hover {
+    background: var(--topbar-login-hover-bg);
+}
+
+.app-user-workspace .app-workspace-topbar-login-button:active {
+    background: var(--topbar-login-active-bg);
+}
+
 .app-user-workspace .app-workspace-credit-gift {
     display: grid;
     width: 24px;

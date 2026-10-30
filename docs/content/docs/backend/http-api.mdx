@@ -264,6 +264,14 @@ CANVAS_BACKEND_DATA_DIR=/明确的数据目录 ./migrate-schema repair-canvas-re
 `PATCH /admin/settings/registration` 的两个协议字段为可选指针语义：不提交表示保留已保存内容，提交空串表示明确清空。注册开关与协议正文可以分开保存，单独切换 `enabled` 不会覆盖协议。当前只校验本次注册的同意标志，不保存长期协议版本或签署凭证。前后端需一起更新，旧客户端缺少同意标志时无法注册。
 ## 站点皮肤主按钮
 
+### 客服入口（外观合同版本 12）
+
+管理员通过 `GET/PATCH /admin/settings/appearance` 读取和保存 `customerService`：`enabled`、`title`（最多 40 字，启用时必填）、`description`（最多 1000 字，支持换行）、`contactName`、`phone`、`wechat`（各最多 80 字）与 `qrCodeResourceId`。启用时至少填写一项内容或上传二维码。配置保存后展示在工作台右上角，游客也可以查看。
+
+`POST /admin/settings/appearance/assets/customer-service-qr` 接收管理员 multipart `file`，允许 PNG/JPEG/WebP，最大 5 MiB；沿用现有上传限流、配额和文件内容检测。保存时校验资源状态、图片类型和归属，其他管理员可以保留当前已引用资源，不能新引用他人的上传。
+
+`GET /public/appearance` 返回 `customerService` 的展示字段及服务端生成的 `qrCodeUrl`，不暴露资源 ID。二维码通过 `GET /public/appearance/assets/customer-service-qr` 提供，关闭入口或恢复默认后拒绝公开读取；已签发的外部存储链接仍遵循原有有效期。关闭开关保留后台草稿与资源引用，公共配置清空展示内容。引用中的二维码禁止删除，清除引用后才允许走既有资源删除流程。未保存文件只在后台本地预览，保存成功后发布。
+
 ### 画布配置、更新公告、状态动画包与 Live2D（外观合同版本 11）
 
 外观设置新增 `updates: { enabled, currentVersion, releases }`，由管理员通过 `PATCH /admin/settings/appearance` 保存；关闭开关保留草稿，但 `GET /public/appearance` 返回关闭状态与空公告列表，前端恢复内置更新日志。开启时公开版本与内容块，当前版本须对应公告版本。媒体上传、管理员预览、公开引用读取及限制详见 [自定义更新公告](/docs/backend/update-announcements)。JSON 请求上限为 512KB；无数据表迁移。
