@@ -154,7 +154,7 @@ handle 放错端点、格式错误或行 ID 不存在时，工具错误回执提
 
 ## 渠道模型目录拉取
 
-`POST /api/ai/models` 与系统渠道的模型预览、拉取及选择导入，在 Base URL 为 `vinted.cam` 根地址或 `/v1` 时读取上游 `GET /v1/catalog`，其余 OpenAI/Gemini 渠道保留原模型发现路径。Vinted 目录必须 `status=ready`、有非空 `revision` 且 `valid_until` 未过期，只返回 `200t.vinted.mi` 支持的三个精确 ID 中当前存在且 `available=true` 的模型。响应仍使用既有模型目录合同，不补缓存模型、不创建生成任务；导入仍默认未定价、未启用。
+`POST /api/ai/models` 与系统渠道的模型预览、拉取及选择导入，在 Base URL 为 `vinted.cam` 根地址或 `/v1` 时读取上游 `GET /v1/catalog`，其余 OpenAI/Gemini 渠道保留原模型发现路径。Vinted 目录必须 `status=ready`、有非空 `revision` 且 `valid_until` 未过期，只返回 `200t.video.tv` 支持的 `seedance-2.0`、`seedance-2.0-fast`、`seedance-2.5` 及既有 `200t.vinted.mi` 支持的三个精确 ID 中当前存在且 `available=true` 的模型。响应仍使用既有模型目录合同，不补缓存模型、不创建生成任务；导入仍默认未定价、未启用。新 Seedance 模型选择 `200t-video-tv` 协议。
 
 ## AutoDL 视频画面规格配置
 

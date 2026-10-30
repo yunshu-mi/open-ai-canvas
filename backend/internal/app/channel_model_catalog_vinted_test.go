@@ -49,6 +49,20 @@ func TestVintedModelCatalogRejectsStaleAndUnavailableModels(t *testing.T) {
 	}
 }
 
+func TestVintedSeedanceModelDiscovery(t *testing.T) {
+	validUntil := time.Now().Add(time.Hour).Format(time.RFC3339Nano)
+	payload := fmt.Sprintf(`{"status":"ready","revision":"rev","valid_until":%q,"models":[{"id":"seedance-2.0","name":"Seedance 2.0","available":true},{"id":"seedance-2.0-fast","name":"Seedance 2.0 Fast","available":true},{"id":"seedance-2.5","name":"Seedance 2.5","available":true},{"id":"seedance-2.5","available":true},{"id":"unknown","available":true}]}`, validUntil)
+	catalog, err := parseVintedModelCatalog([]byte(payload))
+	if err != nil || len(catalog) != 3 {
+		t.Fatalf("catalog=%#v err=%v", catalog, err)
+	}
+	for i, id := range []string{"seedance-2.0", "seedance-2.0-fast", "seedance-2.5"} {
+		if catalog[i].ID != id || catalog[i].ModelType != "video" || catalog[i].DisplayName == "" {
+			t.Fatalf("catalog item=%#v", catalog[i])
+		}
+	}
+}
+
 func TestVintedAdminChannelModelDiscoveryAndImport(t *testing.T) {
 	outboundtest.DNS(t, [4]byte{127, 0, 0, 1}, "vinted.cam")
 	t.Setenv("CANVAS_ALLOWED_PRIVATE_UPSTREAM_HOSTS", "vinted.cam")

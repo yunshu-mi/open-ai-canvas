@@ -229,6 +229,18 @@ func DefaultModelCapabilityConfigForModel(protocol string, modelName string) *Mo
 		video.Operations, video.DefaultOperation = []string{VideoProcessingOperationEnhance}, VideoProcessingOperationEnhance
 		video.Processing = &VideoProcessingConfig{FPSPolicy: VideoProcessingFPSKeepSource, MaxSourceSeconds: DefaultVideoProcessingMaxSourceSeconds}
 	}
+	if protocol == "200t-video-tv" {
+		video.References = VideoReferenceConfig{PromptMaxChars: 10000, MaxImages: 9, MaxImageBytes: 20 * 1024 * 1024, MaxVideos: 3, MaxVideoBytes: 100 * 1024 * 1024, MaxAudios: 3, MaxAudioBytes: 100 * 1024 * 1024}
+		video.Duration = VideoDurationConfig{Selection: "range", Min: 4, Max: 15, Step: 1, Default: 10}
+		video.Ratios, video.DefaultRatio = []string{"16:9", "9:16", "4:3", "3:4", "1:1"}, "9:16"
+		if modelName == "seedance-2.5" {
+			video.Duration.Max = 30
+			video.Ratios = append(video.Ratios, "adaptive")
+		}
+		video.Resolutions, video.DefaultResolution = []string{"480p", "720p"}, "720p"
+		video.GenerateAudio, video.Watermark = VideoBooleanConfig{}, VideoBooleanConfig{}
+		video.Operations, video.DefaultOperation = []string{"text_to_video", "image_to_video", "reference_to_video"}, "text_to_video"
+	}
 	if protocol == "200t-vinted-mi" {
 		c4, deal := modelName == "multiref:sd-2-c4", modelName == "qsqs:wan3-720p-deal"
 		video.References = VideoReferenceConfig{PromptMaxChars: 6000, MaxImages: 10, MaxImageBytes: 10 * 1024 * 1024, MaxVideos: 5, MaxVideoBytes: 50 * 1024 * 1024, MaxVideoDuration: 15, MaxAudios: 5, MaxAudioBytes: 50 * 1024 * 1024, MaxAudioDuration: 15}

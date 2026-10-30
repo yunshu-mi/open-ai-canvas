@@ -545,10 +545,44 @@ export function defaultModelCapabilityConfig(protocol?: ModelProtocol, model = "
         video.defaultOperation = "enhance";
         video.processing = { fpsPolicy: "keep_source", maxSourceSeconds: DEFAULT_VIDEO_PROCESSING_MAX_SOURCE_SECONDS };
     }
+    if (protocol === "200t-video-tv") {
+        video.references = {
+            ...video.references,
+            promptMaxChars: 10000,
+            maxImages: 9,
+            maxImageBytes: 20 * 1024 * 1024,
+            maxVideos: 3,
+            maxVideoBytes: 100 * 1024 * 1024,
+            maxVideoDurationSeconds: 0,
+            maxAudios: 3,
+            maxAudioBytes: 100 * 1024 * 1024,
+            maxAudioDurationSeconds: 0,
+        };
+        video.duration = { selection: "range", min: 4, max: model === "seedance-2.5" ? 30 : 15, step: 1, default: 10 };
+        video.ratios = ["16:9", "9:16", "4:3", "3:4", "1:1", ...(model === "seedance-2.5" ? ["adaptive"] : [])];
+        video.defaultRatio = "9:16";
+        video.resolutions = ["480p", "720p"];
+        video.defaultResolution = "720p";
+        video.generateAudio = { supported: false, default: false };
+        video.watermark = { supported: false, default: false };
+        video.operations = ["text_to_video", "image_to_video", "reference_to_video"];
+        video.defaultOperation = "text_to_video";
+    }
     if (protocol === "200t-vinted-mi") {
         const c4 = model === "multiref:sd-2-c4";
         const deal = model === "qsqs:wan3-720p-deal";
-        video.references = { ...video.references, promptMaxChars: deal ? 10000 : 6000, maxImages: c4 ? 9 : 10, maxImageBytes: 10 * 1024 * 1024, maxVideos: deal ? 0 : c4 ? 3 : 5, maxVideoBytes: deal ? 0 : 50 * 1024 * 1024, maxVideoDurationSeconds: deal ? 0 : 15, maxAudios: c4 ? 3 : 5, maxAudioBytes: 50 * 1024 * 1024, maxAudioDurationSeconds: deal ? 0 : 15 };
+        video.references = {
+            ...video.references,
+            promptMaxChars: deal ? 10000 : 6000,
+            maxImages: c4 ? 9 : 10,
+            maxImageBytes: 10 * 1024 * 1024,
+            maxVideos: deal ? 0 : c4 ? 3 : 5,
+            maxVideoBytes: deal ? 0 : 50 * 1024 * 1024,
+            maxVideoDurationSeconds: deal ? 0 : 15,
+            maxAudios: c4 ? 3 : 5,
+            maxAudioBytes: 50 * 1024 * 1024,
+            maxAudioDurationSeconds: deal ? 0 : 15,
+        };
         video.duration = deal ? { selection: "enum", values: [5, 10, 15, 30], default: 30 } : { selection: "range", min: 4, max: c4 ? 15 : 30, step: 1, default: 4 };
         video.ratios = deal ? ["16:9", "9:16"] : c4 ? ["16:9", "9:16", "1:1"] : ["adaptive", "9:16", "16:9", "1:1", "3:4", "4:3"];
         video.defaultRatio = !c4 && !deal ? "adaptive" : "16:9";
@@ -578,7 +612,10 @@ export function pluginWorkflowCapabilityConfig(protocol: ModelProtocol, workflow
     return { ...fallback, video: workflowVideoCapabilityConfig(fields, fallback.video!) };
 }
 
-export function modelCapabilityConfigFor(config: { channels: Array<{ id: string; models: string[]; interfaceType?: ModelProtocol; modelCosts?: Array<{ model: string; capabilityConfig?: ModelCapabilityConfig; protocol?: ModelProtocol }> }> }, model: string) {
+export function modelCapabilityConfigFor(
+    config: { channels: Array<{ id: string; models: string[]; interfaceType?: ModelProtocol; modelCosts?: Array<{ model: string; capabilityConfig?: ModelCapabilityConfig; protocol?: ModelProtocol }> }> },
+    model: string,
+) {
     const separator = model.indexOf("::");
     const channelId = separator >= 0 ? model.slice(0, separator) : "";
     const modelName = separator >= 0 ? model.slice(separator + 2) : model;
