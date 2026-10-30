@@ -54,9 +54,9 @@ func TestVintedSeedanceLifecycle(t *testing.T) {
 					}
 					switch r.URL.Path {
 					case "/v1/catalog":
-						catalogModel := vintedMITestModel(modelID)
+						catalogModel := vintedSeedanceTestModel(modelID)
 						catalogModel["input_modes"] = []string{"text", "references", "frames"}
-						_ = json.NewEncoder(w).Encode(vintedMITestCatalog(catalogModel, "rev-seedance"))
+						_ = json.NewEncoder(w).Encode(vintedSeedanceTestCatalog(catalogModel, "rev-seedance"))
 					case "/v1/files/content":
 						uploads++
 						data, _ := io.ReadAll(r.Body)
