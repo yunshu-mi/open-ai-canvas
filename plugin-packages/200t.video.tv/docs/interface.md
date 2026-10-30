@@ -1267,59 +1267,7 @@ queued/running、归档未完成继续等待；failed 只有明确补交且原�
                                     "in": {
                                       "$get": [
                                         {
-                                          "$merge": [
-                                            {
-                                              "$ref": "request.extra.preparation.catalog.model.x-canvas-inputs"
-                                            },
-                                            {
-                                              "$if": {
-                                                "condition": {
-                                                  "$and": [
-                                                    {
-                                                      "$eq": [
-                                                        {
-                                                          "$ref": "request.model"
-                                                        },
-                                                        "multiref:sd-2-c4"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "$gt": [
-                                                        {
-                                                          "$len": {
-                                                            "$filter": {
-                                                              "from": {
-                                                                "$sortByOrder": {
-                                                                  "$ref": "request.images"
-                                                                }
-                                                              },
-                                                              "as": "media",
-                                                              "where": {
-                                                                "$in": [
-                                                                  {
-                                                                    "$ref": "media.role"
-                                                                  },
-                                                                  [
-                                                                    "first_frame",
-                                                                    "last_frame"
-                                                                  ]
-                                                                ]
-                                                              }
-                                                            }
-                                                          }
-                                                        },
-                                                        0
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                "then": {
-                                                  "image": "images"
-                                                },
-                                                "else": {}
-                                              }
-                                            }
-                                          ]
+                                          "$ref": "request.extra.preparation.catalog.model.x-canvas-inputs"
                                         },
                                         {
                                           "$ref": "kind"
@@ -1690,59 +1638,7 @@ queued/running、归档未完成继续等待；failed 只有明确补交且原�
                                     "in": {
                                       "$get": [
                                         {
-                                          "$merge": [
-                                            {
-                                              "$ref": "request.extra.preparation.catalog.model.x-canvas-inputs"
-                                            },
-                                            {
-                                              "$if": {
-                                                "condition": {
-                                                  "$and": [
-                                                    {
-                                                      "$eq": [
-                                                        {
-                                                          "$ref": "request.model"
-                                                        },
-                                                        "multiref:sd-2-c4"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "$gt": [
-                                                        {
-                                                          "$len": {
-                                                            "$filter": {
-                                                              "from": {
-                                                                "$sortByOrder": {
-                                                                  "$ref": "request.images"
-                                                                }
-                                                              },
-                                                              "as": "media",
-                                                              "where": {
-                                                                "$in": [
-                                                                  {
-                                                                    "$ref": "media.role"
-                                                                  },
-                                                                  [
-                                                                    "first_frame",
-                                                                    "last_frame"
-                                                                  ]
-                                                                ]
-                                                              }
-                                                            }
-                                                          }
-                                                        },
-                                                        0
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                "then": {
-                                                  "image": "images"
-                                                },
-                                                "else": {}
-                                              }
-                                            }
-                                          ]
+                                          "$ref": "request.extra.preparation.catalog.model.x-canvas-inputs"
                                         },
                                         {
                                           "$ref": "kind"

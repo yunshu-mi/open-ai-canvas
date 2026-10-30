@@ -568,31 +568,6 @@ export function defaultModelCapabilityConfig(protocol?: ModelProtocol, model = "
         video.operations = ["text_to_video", "image_to_video", "reference_to_video"];
         video.defaultOperation = "text_to_video";
     }
-    if (protocol === "200t-vinted-mi") {
-        const c4 = model === "multiref:sd-2-c4";
-        const deal = model === "qsqs:wan3-720p-deal";
-        video.references = {
-            ...video.references,
-            promptMaxChars: deal ? 10000 : 6000,
-            maxImages: c4 ? 9 : 10,
-            maxImageBytes: 10 * 1024 * 1024,
-            maxVideos: deal ? 0 : c4 ? 3 : 5,
-            maxVideoBytes: deal ? 0 : 50 * 1024 * 1024,
-            maxVideoDurationSeconds: deal ? 0 : 15,
-            maxAudios: c4 ? 3 : 5,
-            maxAudioBytes: 50 * 1024 * 1024,
-            maxAudioDurationSeconds: deal ? 0 : 15,
-        };
-        video.duration = deal ? { selection: "enum", values: [5, 10, 15, 30], default: 30 } : { selection: "range", min: 4, max: c4 ? 15 : 30, step: 1, default: 4 };
-        video.ratios = deal ? ["16:9", "9:16"] : c4 ? ["16:9", "9:16", "1:1"] : ["adaptive", "9:16", "16:9", "1:1", "3:4", "4:3"];
-        video.defaultRatio = !c4 && !deal ? "adaptive" : "16:9";
-        video.resolutions = c4 || deal ? ["720p"] : ["480p", "720p", "1080p"];
-        video.defaultResolution = c4 || deal ? "720p" : "1080p";
-        video.generateAudio = { supported: !c4 && !deal, default: !c4 && !deal };
-        // C4 与阿里 Wan3 的 references 模式允许只传 prompt，业务层仍属文生视频。
-        video.operations = ["text_to_video", "image_to_video", "reference_to_video", "audio_to_video"];
-        video.defaultOperation = "text_to_video";
-    }
     return { version: 1, text, image: defaultImageCapabilityConfig(protocol, model), video };
 }
 

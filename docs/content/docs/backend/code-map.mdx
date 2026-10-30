@@ -11,9 +11,9 @@ description: 从产品功能快速定位主要代码入口
 
 - Vinted 模型发现：`channel_model_catalog.go` 在统一鉴权与出站链路中分派目录；`channel_model_catalog_vinted.go` 精确匹配供应商域名及解析 `/v1/catalog`，只返回当前插件支持的可用模型。`channel_model_catalog_vinted_test.go` 覆盖目录状态、域名匹配、管理员预览、选择导入、去重与定价边界。
 
-- Vinted 实时映射：`internal/protocol/expression.go` 的 `$get` / `$object` 处理动态 JSON 字段，`preparation.go` 的 `expiresAt` 校验目录有效期；`vinted_mi_video_test.go` 覆盖三个模型的共用引用数组、画质字段改名、默认值和未声明字段裁剪。
+- Vinted 实时映射：`internal/protocol/expression.go` 的 `$get` / `$object` 处理动态 JSON 字段，`preparation.go` 的 `expiresAt` 校验目录有效期；`vinted_seedance_regressions_test.go` 覆盖三个模型的共用引用数组、画质字段改名、默认值和未声明字段裁剪。
 
-- `200t.vinted.mi`：`plugin-packages/generate-catalog.mjs` 定义请求及生命周期，`plugin-packages/200t.vinted.mi/` 保存清单和接口说明，分发包为同名 `.yingce-plugin`。宿主 `provider_protocol_prepare.go` 支持图片、视频、音频逐个上传；`provider_protocol_result.go` 支持 `anonymousResult` 签名下载及失效换签。模型默认能力在前后端 `model_capability_defaults.go` / `model-capabilities.ts`，回归在 `vinted_mi_video_test.go` / `vinted-mi-capabilities.test.ts`。
+- `200t.video.tv`：`plugin-packages/generate-catalog.mjs` 独立定义 Seedance 请求及生命周期，`plugin-packages/200t.video.tv/` 保存清单和接口说明，分发包为同名 `.yingce-plugin`。宿主 `provider_protocol_prepare.go` 支持图片、视频、音频原文件逐个上传；`provider_protocol_result.go` 支持 `anonymousResult` 签名下载及失效换签。模型默认能力在前后端 `model_capability_defaults.go` / `model-capabilities.ts`，回归在 `vinted_seedance_test.go`、`vinted_seedance_regressions_test.go` / `vinted-seedance-capabilities.test.ts`。
 
 - 视频插件移除后的启动清理回归：`backend/internal/app/removed_video_plugins_test.go`；保留的通用原片下载回归：`backend/internal/app/protocol_original_download_test.go`。
 

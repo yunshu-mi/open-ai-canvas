@@ -30,9 +30,9 @@ func TestVintedModelCatalogURL(t *testing.T) {
 
 func TestVintedModelCatalogRejectsStaleAndUnavailableModels(t *testing.T) {
 	validUntil := time.Now().Add(time.Hour).Format(time.RFC3339Nano)
-	models := `[{"id":"multiref:sd-2-c4","available":false},{"id":"multiref:ali-wan3","available":false},{"id":"qsqs:wan3-720p-deal","name":"Wan3 720p Deal","available":true},{"id":"qsqs:wan3-720p-deal","available":true},{"id":"frameflow:seedance-2.0","available":true},{"id":"unknown","available":true}]`
+	models := `[{"id":"seedance-2.0","available":false},{"id":"seedance-2.0-fast","available":false},{"id":"seedance-2.5","name":"Seedance 2.5","available":true},{"id":"seedance-2.5","available":true},{"id":"multiref:sd-2-c4","available":true},{"id":"multiref:ali-wan3","available":true},{"id":"qsqs:wan3-720p-deal","available":true},{"id":"frameflow:seedance-2.0","available":true},{"id":"unknown","available":true}]`
 	catalog, err := parseVintedModelCatalog([]byte(fmt.Sprintf(`{"status":"ready","revision":"rev","valid_until":%q,"models":%s}`, validUntil, models)))
-	if err != nil || len(catalog) != 1 || catalog[0].ID != "qsqs:wan3-720p-deal" || catalog[0].ModelType != "video" || catalog[0].DisplayName != "Wan3 720p Deal" {
+	if err != nil || len(catalog) != 1 || catalog[0].ID != "seedance-2.5" || catalog[0].ModelType != "video" || catalog[0].DisplayName != "Seedance 2.5" {
 		t.Fatalf("catalog=%#v err=%v", catalog, err)
 	}
 	for _, payload := range []string{
@@ -83,9 +83,10 @@ func TestVintedAdminChannelModelDiscoveryAndImport(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "ready", "revision": "rev", "valid_until": time.Now().Add(time.Hour).Format(time.RFC3339Nano),
 			"models": []any{
+				map[string]any{"id": "seedance-2.0", "available": true},
+				map[string]any{"id": "seedance-2.0-fast", "available": true},
+				map[string]any{"id": "seedance-2.5", "available": true},
 				map[string]any{"id": "multiref:sd-2-c4", "available": true},
-				map[string]any{"id": "multiref:ali-wan3", "available": true},
-				map[string]any{"id": "qsqs:wan3-720p-deal", "available": true},
 				map[string]any{"id": "frameflow:seedance-2.0", "available": true},
 			},
 		})
@@ -100,7 +101,7 @@ func TestVintedAdminChannelModelDiscoveryAndImport(t *testing.T) {
 	if _, err := svc.PreviewAdminChannelModels(context.Background(), &model.User{ID: "user", Role: model.UserRoleUser}, channel.ID); err == nil || requests != 0 {
 		t.Fatal("non-admin reached stored channel credentials")
 	}
-	want := []string{"multiref:ali-wan3", "multiref:sd-2-c4", "qsqs:wan3-720p-deal"}
+	want := []string{"seedance-2.0", "seedance-2.0-fast", "seedance-2.5"}
 	preview, err := svc.PreviewAdminChannelModels(context.Background(), admin, channel.ID)
 	if err != nil || !reflect.DeepEqual(preview, want) {
 		t.Fatalf("preview=%v err=%v", preview, err)

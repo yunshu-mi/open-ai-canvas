@@ -14,124 +14,39 @@ import (
 	"testing"
 	"time"
 
-	"yingce/backend/internal/model"
 	"yingce/backend/internal/protocol"
 )
 
-func vintedMITestModel(modelID string) map[string]any {
-	properties := map[string]any{"duration": map[string]any{"default": 4}, "ratio": map[string]any{"default": "16:9"}, "resolution": map[string]any{"default": "720p"}}
-	mapping := map[string]any{"image": "images", "video": "videos", "audio": "audios"}
-	modes := []string{"references", "frames"}
-	if modelID == "multiref:ali-wan3" {
-		properties["save_audio"] = map[string]any{"default": true}
-		modes = []string{"references"}
-	}
-	if modelID == "qsqs:wan3-720p-deal" {
-		delete(mapping, "video")
-		modes = []string{"text", "references"}
-	}
-	return map[string]any{"id": modelID, "available": true, "input_modes": modes, "x-canvas-inputs": mapping, "parameter_schema": map[string]any{"properties": properties}}
-}
-
-func TestVintedMITextOnlyUsesDeclaredWireMode(t *testing.T) {
-	allowLoopbackProviderTest(t)
-	center, err := newPluginRuntime(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
-	for _, modelID := range []string{"multiref:sd-2-c4", "multiref:ali-wan3", "qsqs:wan3-720p-deal"} {
-		t.Run(modelID, func(t *testing.T) {
-			requests := 0
-			wireMode := "references"
-			if modelID == "qsqs:wan3-720p-deal" {
-				wireMode = "text"
-			}
-			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				requests++
-				switch r.URL.Path {
-				case "/v1/catalog":
-					catalogModel := vintedMITestModel(modelID)
-					catalogModel["input_schema"] = map[string]any{"type": "object", "required": []string{"prompt"}}
-					_ = json.NewEncoder(w).Encode(vintedMITestCatalog(catalogModel, "rev"))
-				case "/v1/videos/quote":
-					var body map[string]any
-					_ = json.NewDecoder(r.Body).Decode(&body)
-					if body["input_mode"] != wireMode || !reflect.DeepEqual(body["input"], map[string]any{"prompt": "无素材的文字描述"}) {
-						t.Errorf("text-only body=%#v", body)
-					}
-					_ = json.NewEncoder(w).Encode(map[string]any{"quote_id": "q", "credits": 30, "catalog_revision": "rev"})
-				default:
-					t.Errorf("text-only preparation triggered %s", r.URL.Path)
-					w.WriteHeader(http.StatusNotFound)
-				}
-			}))
-			defer upstream.Close()
-			profile := DefaultModelCapabilityConfigForModel("200t-vinted-mi", modelID).Video
-			input := canvasGenerationInput{Mode: "video", Prompt: "无素材的文字描述", Config: providerConfig{Model: modelID, BaseURL: upstream.URL, InterfaceType: "200t-vinted-mi", VideoSeconds: "10", Size: "16:9", VQuality: "720p"}, Metadata: map[string]any{"videoOperation": "text_to_video"}}
-			if err := validateVideoTask(profile, input); err != nil {
-				t.Fatalf("backend text-only validation: %v", err)
-			}
-			request := protocolRequestFromInput(input)
-			request.Extra["idempotencyKey"] = "original-operation"
-			if err := prepareProtocolRequest(context.Background(), input, adapter, &request); err != nil {
-				t.Fatal(err)
-			}
-			spec, err := adapter.BuildCreate(context.Background(), protocol.RequestContext{Request: request})
-			if err != nil || spec.Headers["Expected-Quote-Id"] != "q" || requests != 2 {
-				t.Fatalf("spec=%#v requests=%d err=%v", spec, requests, err)
-			}
-		})
+func vintedSeedanceTestModel(modelID string) map[string]any {
+	return map[string]any{
+		"id": modelID, "available": true,
+		"input_modes":     []string{"text", "references", "frames"},
+		"x-canvas-inputs": map[string]any{"image": "images", "video": "videos", "audio": "audios"},
+		"parameter_schema": map[string]any{"properties": map[string]any{
+			"duration": map[string]any{"default": 4}, "ratio": map[string]any{"default": "16:9"}, "resolution": map[string]any{"default": "720p"},
+		}},
 	}
 }
 
-func TestVintedMIRepairsStoredDefaultTextCapability(t *testing.T) {
-	for _, modelID := range []string{"multiref:sd-2-c4", "multiref:ali-wan3"} {
-		profile := DefaultModelCapabilityConfigForModel("200t-vinted-mi", modelID)
-		profile.Video.Operations = []string{"image_to_video", "reference_to_video", "audio_to_video"}
-		profile.Video.DefaultOperation = "reference_to_video"
-		encoded, _ := json.Marshal(profile)
-		stored := model.ChannelModel{ModelKey: modelID, ProviderModelKey: modelID, Capability: "video", Protocol: "200t-vinted-mi", CapabilityConfigJSON: string(encoded)}
-		normalized, err := normalizedChannelModelCapability(&stored)
-		if err != nil || !containsCapabilityString(normalized.Video.Operations, "text_to_video") {
-			t.Fatalf("normalized=%#v err=%v", normalized, err)
-		}
-		spec, err := CapabilitySpecFromModelCapabilityConfig(normalized, "video")
-		if err != nil || !containsCapabilityString(spec.Operations, "text_to_video") {
-			t.Fatalf("route spec=%#v err=%v", spec, err)
-		}
-		if stored.CapabilityConfigJSON != string(encoded) {
-			t.Fatal("read projection rewrote stored configuration")
-		}
-		profile.Video.Duration.Max = 8
-		encoded, _ = json.Marshal(profile)
-		stored.CapabilityConfigJSON = string(encoded)
-		normalized, err = normalizedChannelModelCapability(&stored)
-		if err != nil || normalized.Video.Duration.Max != 8 || containsCapabilityString(normalized.Video.Operations, "text_to_video") {
-			t.Fatalf("administrator configuration changed: %#v err=%v", normalized, err)
-		}
-	}
-}
-
-func vintedMITestCatalog(model map[string]any, revision string) map[string]any {
+func vintedSeedanceTestCatalog(model map[string]any, revision string) map[string]any {
 	return map[string]any{"status": "ready", "revision": revision, "valid_until": time.Now().Add(time.Hour).Format(time.RFC3339Nano), "models": []any{model}}
 }
 
-func TestVintedMICompleteLifecycle(t *testing.T) {
+func TestVintedSeedanceSignedURLRefresh(t *testing.T) {
 	allowLoopbackProviderTest(t)
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, ok := center.registry.Resolve("200t-vinted-mi")
-	if !ok || adapter.Metadata().Name != "200t.vinted.mi" {
-		t.Fatal("200t.vinted.mi package was not installed")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok || adapter.Metadata().Name != "200t.video.tv" {
+		t.Fatal("200t.video.tv package was not installed")
 	}
 	var imageBytes bytes.Buffer
 	if err := png.Encode(&imageBytes, image.NewRGBA(image.Rect(0, 0, 301, 301))); err != nil {
 		t.Fatal(err)
 	}
-	for _, modelID := range []string{"multiref:sd-2-c4", "multiref:ali-wan3", "qsqs:wan3-720p-deal"} {
+	for _, modelID := range []string{"seedance-2.0", "seedance-2.0-fast", "seedance-2.5"} {
 		t.Run(modelID, func(t *testing.T) {
 			var quoted map[string]any
 			var submitted []byte
@@ -159,22 +74,14 @@ func TestVintedMICompleteLifecycle(t *testing.T) {
 				}
 				switch r.URL.Path {
 				case "/v1/catalog":
-					_ = json.NewEncoder(w).Encode(vintedMITestCatalog(vintedMITestModel(modelID), "rev-current"))
-				case "/v1/files":
+					_ = json.NewEncoder(w).Encode(vintedSeedanceTestCatalog(vintedSeedanceTestModel(modelID), "rev-current"))
+				case "/v1/files/content":
 					uploads++
-					var body map[string]any
-					_ = json.NewDecoder(r.Body).Decode(&body)
-					if body["name"] == nil || len(body) != 2 {
-						t.Errorf("invalid named upload: %#v", body)
-					}
-					kind := ""
-					for _, candidate := range []string{"image", "video", "audio"} {
-						if payload, ok := body[candidate+"_b64"].(string); ok && payload != "" {
-							kind = candidate
-						}
-					}
-					if kind == "" {
-						t.Error("media was not uploaded as base64")
+					data, _ := io.ReadAll(r.Body)
+					kind := r.URL.Query().Get("kind")
+					mime := map[string]string{"image": "image/png", "video": "video/mp4", "audio": "audio/wav"}[kind]
+					if len(data) == 0 || r.URL.Query().Get("name") == "" || r.ContentLength != int64(len(data)) || r.Header.Get("Content-Type") != mime || !protocolMediaFormatMatches(mime, data) {
+						t.Errorf("invalid raw upload: kind=%s mime=%s", kind, r.Header.Get("Content-Type"))
 					}
 					_ = json.NewEncoder(w).Encode(map[string]any{"asset_id": fmt.Sprintf("asset-%d", uploads), "kind": kind})
 				case "/v1/videos/quote":
@@ -184,7 +91,7 @@ func TestVintedMICompleteLifecycle(t *testing.T) {
 					}
 					parameters := quoted["parameters"].(map[string]any)
 					_, hasAudio := parameters["save_audio"]
-					if hasAudio != (modelID == "multiref:ali-wan3") || hasAudio && parameters["save_audio"] != false {
+					if hasAudio {
 						t.Errorf("save_audio mapping = %#v", parameters)
 					}
 					_ = json.NewEncoder(w).Encode(map[string]any{"quote_id": "quote-1", "credits": 30, "catalog_revision": "rev-current"})
@@ -223,11 +130,9 @@ func TestVintedMICompleteLifecycle(t *testing.T) {
 				}
 			}))
 			defer server.Close()
-			input := canvasGenerationInput{Mode: "video", Prompt: "镜头缓慢向前", Config: providerConfig{Model: modelID, BaseURL: server.URL, APIKey: "test-key", InterfaceType: "200t-vinted-mi", VideoSeconds: "10", Size: "16:9", VQuality: "720p", VideoGenerateAudio: "false"}, ReferenceImages: []providerMedia{{DataURL: dataURL("image/png", imageBytes.Bytes()), Role: "reference_image"}}, ReferenceAudios: []providerMedia{{DataURL: dataURL("audio/wav", []byte("RIFF0000WAVEdata"))}}, Metadata: map[string]interface{}{"videoEditOperation": "reference_to_video"}}
+			input := canvasGenerationInput{Mode: "video", Prompt: "镜头缓慢向前", Config: providerConfig{Model: modelID, BaseURL: server.URL, APIKey: "test-key", InterfaceType: "200t-video-tv", VideoSeconds: "10", Size: "16:9", VQuality: "720p", VideoGenerateAudio: "false"}, ReferenceImages: []providerMedia{{DataURL: dataURL("image/png", imageBytes.Bytes()), Role: "reference_image"}}, ReferenceAudios: []providerMedia{{DataURL: dataURL("audio/wav", []byte("RIFF0000WAVEdata"))}}, Metadata: map[string]interface{}{"videoEditOperation": "reference_to_video"}}
 			input.Config.Headers = []OutboundHeader{{Name: "X-Private", Value: "private-value"}, {Name: "Expected-Quote-Id", Value: "stale-quote"}}
-			if modelID != "qsqs:wan3-720p-deal" {
-				input.ReferenceVideos = []providerMedia{{DataURL: dataURL("video/mp4", []byte(vintedTestMP4))}}
-			}
+			input.ReferenceVideos = []providerMedia{{DataURL: dataURL("video/mp4", []byte(vintedTestMP4))}}
 			result, err := runProtocolAdapterTaskWithPolicy(context.Background(), input, adapter, videoPollPolicy{Interval: time.Millisecond, Sleep: func(context.Context, time.Duration) error { return nil }})
 			if err != nil || result == nil || creates != 2 || polls != 2 || uploads != 2+len(input.ReferenceVideos) || downloads != 2 || signatures != 2 {
 				t.Fatalf("result=%#v err=%v creates=%d polls=%d uploads=%d downloads=%d", result, err, creates, polls, uploads, downloads)
@@ -236,16 +141,19 @@ func TestVintedMICompleteLifecycle(t *testing.T) {
 	}
 }
 
-func TestVintedMIFramesAndTextMappings(t *testing.T) {
+func TestVintedSeedanceFramesAndTextMappings(t *testing.T) {
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	preparer := adapter.(protocol.PreparationAdapter)
 	quoteStep := adapter.Metadata().Lifecycle.Prepare[4]
-	request := protocol.GenerationRequest{Model: "multiref:sd-2-c4", Prompt: "镜头移动", Duration: 8, Resolution: "720p", AspectRatio: "16:9", Images: []protocol.MediaReference{{Role: "last_frame", Order: 0}, {Role: "first_frame", Order: 1}}, Extra: map[string]any{"preparation": map[string]any{
-		"catalog": map[string]any{"revision": "rev", "model": vintedMITestModel("multiref:sd-2-c4")},
+	request := protocol.GenerationRequest{Model: "seedance-2.0", Prompt: "镜头移动", Duration: 8, Resolution: "720p", AspectRatio: "16:9", Images: []protocol.MediaReference{{Role: "last_frame", Order: 0}, {Role: "first_frame", Order: 1}}, Extra: map[string]any{"preparation": map[string]any{
+		"catalog": map[string]any{"revision": "rev", "model": vintedSeedanceTestModel("seedance-2.0")},
 		"images":  []any{map[string]any{"asset_id": "last", "kind": "image", "role": "last_frame"}, map[string]any{"asset_id": "first", "kind": "image", "role": "first_frame"}},
 	}}}
 	spec, err := preparer.BuildPreparation(context.Background(), quoteStep, request)
@@ -263,8 +171,8 @@ func TestVintedMIFramesAndTextMappings(t *testing.T) {
 	if _, err := adapter.BuildCreate(context.Background(), protocol.RequestContext{Request: request}); err == nil {
 		t.Fatal("tail-only frames accepted")
 	}
-	request.Model, request.Images = "qsqs:wan3-720p-deal", nil
-	request.Extra["preparation"] = map[string]any{"catalog": map[string]any{"revision": "rev", "model": vintedMITestModel("qsqs:wan3-720p-deal")}}
+	request.Model, request.Images = "seedance-2.5", nil
+	request.Extra["preparation"] = map[string]any{"catalog": map[string]any{"revision": "rev", "model": vintedSeedanceTestModel("seedance-2.5")}}
 	spec, err = preparer.BuildPreparation(context.Background(), quoteStep, request)
 	if err != nil {
 		t.Fatal(err)
@@ -283,23 +191,22 @@ func TestVintedMIFramesAndTextMappings(t *testing.T) {
 			t.Fatalf("invalid quote accepted: %s", response)
 		}
 	}
-	request.Videos = []protocol.MediaReference{{URL: "https://example.com/ref.mp4"}}
-	if _, err := adapter.BuildCreate(context.Background(), protocol.RequestContext{Request: request}); err == nil {
-		t.Fatal("Deal video reference accepted")
-	}
 	request.Model, request.Videos = "unsupported", nil
 	if _, err := adapter.BuildCreate(context.Background(), protocol.RequestContext{Request: request}); err == nil {
 		t.Fatal("unsupported model accepted")
 	}
 }
 
-func TestVintedMIPriceChangeDoesNotRequoteOrReplaceOperation(t *testing.T) {
+func TestVintedSeedancePriceChangeDoesNotRequoteOrReplaceOperation(t *testing.T) {
 	allowLoopbackProviderTest(t)
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	quotes, creates := 0, 0
 	var firstBody []byte
 	var firstKey string
@@ -307,7 +214,7 @@ func TestVintedMIPriceChangeDoesNotRequoteOrReplaceOperation(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/v1/catalog":
-			_ = json.NewEncoder(w).Encode(vintedMITestCatalog(vintedMITestModel("qsqs:wan3-720p-deal"), "rev"))
+			_ = json.NewEncoder(w).Encode(vintedSeedanceTestCatalog(vintedSeedanceTestModel("seedance-2.5"), "rev"))
 		case "/v1/videos/quote":
 			quotes++
 			_, _ = io.WriteString(w, `{"quote_id":"q1","credits":30,"catalog_revision":"rev"}`)
@@ -327,42 +234,48 @@ func TestVintedMIPriceChangeDoesNotRequoteOrReplaceOperation(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	_, err = runProtocolAdapterTaskWithPolicy(context.Background(), canvasGenerationInput{Mode: "video", Prompt: "test", Config: providerConfig{Model: "qsqs:wan3-720p-deal", BaseURL: server.URL}}, adapter, videoPollPolicy{Sleep: func(context.Context, time.Duration) error { return nil }})
+	_, err = runProtocolAdapterTaskWithPolicy(context.Background(), canvasGenerationInput{Mode: "video", Prompt: "test", Config: providerConfig{Model: "seedance-2.5", BaseURL: server.URL, VideoSeconds: "10", Size: "16:9", VQuality: "720p"}}, adapter, videoPollPolicy{Sleep: func(context.Context, time.Duration) error { return nil }})
 	if err == nil || quotes != 1 || creates < 1 || creates > 3 || firstKey == "" {
 		t.Fatalf("err=%v quotes=%d creates=%d", err, quotes, creates)
 	}
 }
 
-func TestVintedMIDoesNotSubmitUnavailableModel(t *testing.T) {
+func TestVintedSeedanceDoesNotSubmitUnavailableModel(t *testing.T) {
 	allowLoopbackProviderTest(t)
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests++
 		if r.URL.Path != "/v1/catalog" {
 			t.Error("unavailable model triggered a write")
 		}
-		unavailable := vintedMITestModel("multiref:sd-2-c4")
+		unavailable := vintedSeedanceTestModel("seedance-2.0")
 		unavailable["available"] = false
-		_ = json.NewEncoder(w).Encode(vintedMITestCatalog(unavailable, "rev"))
+		_ = json.NewEncoder(w).Encode(vintedSeedanceTestCatalog(unavailable, "rev"))
 	}))
 	defer server.Close()
-	_, err = runProtocolAdapterTask(context.Background(), canvasGenerationInput{Mode: "video", Prompt: "test", Config: providerConfig{Model: "multiref:sd-2-c4", BaseURL: server.URL}}, adapter)
+	_, err = runProtocolAdapterTask(context.Background(), canvasGenerationInput{Mode: "video", Prompt: "test", Config: providerConfig{Model: "seedance-2.0", BaseURL: server.URL, VideoSeconds: "10", Size: "16:9", VQuality: "720p"}}, adapter)
 	if err == nil || requests != 1 {
 		t.Fatalf("err=%v requests=%d", err, requests)
 	}
 }
 
-func TestVintedMIRecoveredAndUnknownStates(t *testing.T) {
+func TestVintedSeedanceRecoveredAndUnknownStates(t *testing.T) {
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	for _, tc := range []struct {
 		body   string
 		status protocol.Status
@@ -379,24 +292,27 @@ func TestVintedMIRecoveredAndUnknownStates(t *testing.T) {
 	}
 }
 
-func TestVintedMIDynamicCatalogMapping(t *testing.T) {
+func TestVintedSeedanceDynamicCatalogMapping(t *testing.T) {
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	preparer := adapter.(protocol.PreparationAdapter)
 	quote := adapter.Metadata().Lifecycle.Prepare[4]
-	for _, modelID := range []string{"multiref:sd-2-c4", "multiref:ali-wan3", "qsqs:wan3-720p-deal"} {
+	for _, modelID := range []string{"seedance-2.0", "seedance-2.0-fast", "seedance-2.5"} {
 		t.Run(modelID, func(t *testing.T) {
-			model := vintedMITestModel(modelID)
+			model := vintedSeedanceTestModel(modelID)
 			model["x-canvas-inputs"] = map[string]any{"image": "references", "audio": "references"}
 			model["parameter_schema"] = map[string]any{"properties": map[string]any{"duration": map[string]any{"default": 15}, "quality": map[string]any{"default": "720p"}, "extra_declared": map[string]any{"default": "official"}, "no_default": map[string]any{}}}
-			request := protocol.GenerationRequest{Model: modelID, Prompt: "test", Resolution: "1080p", Extra: map[string]any{"preparation": map[string]any{
+			request := protocol.GenerationRequest{Model: modelID, Prompt: "test", Resolution: "480p", Extra: map[string]any{"preparation": map[string]any{
 				"catalog": map[string]any{"revision": "rev", "model": model},
 				"images":  []any{map[string]any{"asset_id": "image-1", "kind": "image", "role": "reference_image"}},
 				"audios":  []any{map[string]any{"asset_id": "audio-1", "kind": "audio"}},
-			}}, ProviderOptions: map[string]map[string]any{"200t-vinted-mi": {"parameters": map[string]any{"extra_declared": "override", "undeclared": "must-not-leak"}}}}
+			}}, ProviderOptions: map[string]map[string]any{"200t-video-tv": {"parameters": map[string]any{"extra_declared": "override", "undeclared": "must-not-leak"}}}}
 			spec, err := preparer.BuildPreparation(context.Background(), quote, request)
 			if err != nil {
 				t.Fatal(err)
@@ -409,12 +325,12 @@ func TestVintedMIDynamicCatalogMapping(t *testing.T) {
 			if len(input) != 2 || len(refs) != 2 || refs[0].(map[string]any)["asset_id"] != "image-1" || refs[1].(map[string]any)["asset_id"] != "audio-1" || len(refs[0].(map[string]any)) != 2 {
 				t.Fatalf("input=%s", encoded)
 			}
-			want := map[string]any{"duration": float64(15), "quality": "1080p", "extra_declared": "override"}
+			want := map[string]any{"duration": float64(15), "quality": "480p", "extra_declared": "override"}
 			if !reflect.DeepEqual(body["parameters"], want) {
 				t.Fatalf("parameters=%#v", body["parameters"])
 			}
 			request.Duration = 6
-			request.ProviderOptions["200t-vinted-mi"]["parameters"].(map[string]any)["duration"] = 30
+			request.ProviderOptions["200t-video-tv"]["parameters"].(map[string]any)["duration"] = 30
 			spec, err = preparer.BuildPreparation(context.Background(), quote, request)
 			if err != nil {
 				t.Fatal(err)
@@ -428,17 +344,20 @@ func TestVintedMIDynamicCatalogMapping(t *testing.T) {
 	}
 }
 
-func TestVintedMICatalogRejectsExpiredSnapshotAndMissingMediaMapping(t *testing.T) {
+func TestVintedSeedanceCatalogRejectsExpiredSnapshotAndMissingMediaMapping(t *testing.T) {
 	center, err := newPluginRuntime(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, _ := center.registry.Resolve("200t-vinted-mi")
+	adapter, ok := center.registry.Resolve("200t-video-tv")
+	if !ok {
+		t.Fatal("200t.video.tv plugin not installed")
+	}
 	preparer := adapter.(protocol.PreparationAdapter)
 	step := adapter.Metadata().Lifecycle.Prepare[0]
 	for _, tc := range []string{"expired", "missing-mapping", "unsupported-mode"} {
-		model := vintedMITestModel("multiref:ali-wan3")
-		payload := vintedMITestCatalog(model, "rev")
+		model := vintedSeedanceTestModel("seedance-2.0-fast")
+		payload := vintedSeedanceTestCatalog(model, "rev")
 		switch tc {
 		case "expired":
 			payload["valid_until"] = time.Now().Add(-time.Minute).Format(time.RFC3339Nano)
@@ -448,7 +367,7 @@ func TestVintedMICatalogRejectsExpiredSnapshotAndMissingMediaMapping(t *testing.
 			model["input_modes"] = []string{"text"}
 		}
 		encoded, _ := json.Marshal(payload)
-		if _, _, err := preparer.ParsePreparation(context.Background(), step, protocol.GenerationRequest{Model: "multiref:ali-wan3", Images: []protocol.MediaReference{{Role: "reference_image"}}}, encoded); err == nil {
+		if _, _, err := preparer.ParsePreparation(context.Background(), step, protocol.GenerationRequest{Model: "seedance-2.0-fast", Images: []protocol.MediaReference{{Role: "reference_image"}}}, encoded); err == nil {
 			t.Fatalf("accepted %s", tc)
 		}
 	}

@@ -44,7 +44,7 @@ func parseVintedModelCatalog(data []byte) ([]ChannelModelCatalogItem, error) {
 	for _, item := range payload.Models {
 		// 仅导入当前插件支持且实时可用的精确 ID，不补旧别名或缓存条目。
 		switch item.ID {
-		case "seedance-2.0", "seedance-2.0-fast", "seedance-2.5", "multiref:sd-2-c4", "multiref:ali-wan3", "qsqs:wan3-720p-deal":
+		case "seedance-2.0", "seedance-2.0-fast", "seedance-2.5":
 		default:
 			continue
 		}

@@ -117,7 +117,7 @@ eagle-asset-connector.yingce-plugin
 
 Provider 的 `result` 可以返回二进制媒体或 JSON 签名地址。JSON 响应沿用同一 Provider 的 `response` 映射，必须解析为成功状态和对应媒体结果；随后由宿主下载并保存，下载重试会重新获取签名。相对结果 URL 按渠道 Base URL 解析，签名参数原样保留；跨源下载不携带渠道 Key 和自定义请求头，出站仍受 SSRF 校验。
 
-官方插件目录已移除 `vinted-seedance-video`、`200t-seedance-video` 与 `vinted-video`，不再随版本分发。后端重启时会从插件注册表清理对应的旧官方记录；原有渠道需改用仍可用的协议。
+官方插件目录已移除 `vinted-seedance-video`、`200t-seedance-video`、`vinted-video` 与 `200t.vinted.mi`，不再随版本分发。后端重启时会从插件注册表清理对应的旧官方记录；原有渠道需改用仍可用的协议。
 
 插件声明 `runtime.backend: declarative-lifecycle`，旧后端会拒绝安装，必须同步升级宿主。Provider 的 `lifecycle` 合同包括：`prepare`（同源操作、可选 images/videos/audios 遍历、响应断言与结果赋值）、`mediaLimits`（实际格式和字节数）、`requestBytes`（JSON 体积）、`createAttempts`（最多三次、必须有宿主幂等键）、`pollIntervalMs`（最长 60 秒）、`originalMp4`（原片响应与续传校验）及 `anonymousResult`（独立结果端点返回签名 URL 后匿名下载并校验 MP4 内容）。准备结果仅存在本次执行内存的 `request.extra.preparation`，不执行包内脚本；任一准备步骤失败即停止生成。
 
@@ -127,9 +127,7 @@ Provider 的 `result` 可以返回二进制媒体或 JSON 签名地址。JSON �
 
 插件先读取未过期的 `/v1/catalog`，通过 `/v1/files/content` 上传原文件字节，再按 `x-canvas-inputs` 映射有序 `asset_id`。只发送目录声明的参数，扩展使用 `providerOptions.200t-video-tv.parameters`，不能覆盖已选择的统一参数。报价要求有效编号、正整数积分和相同目录版本；随后用完全相同正文、`Expected-Quote-Id` 和固定幂等编号提交，最多重试三次，不自动更换报价。报价写入任务日志，与影策渠道本地定价分开。成功但尚未归档时继续等待原任务，取得签名地址后匿名下载并由宿主持久化。受理不明且未获得任务 ID 时需保留日志中的操作编号，用原 API Key 查询 `/v1/submissions/{key}` 人工核对，当前没有独立恢复 UI，不应另建订单。
 
-`200t.vinted.mi` 是此前的独立主视频插件，Provider ID 为 `200t-vinted-mi`，Base URL 为 `https://vinted.cam`。渠道可通过“拉取模型”从 `/v1/catalog` 发现 `multiref:sd-2-c4`、`multiref:ali-wan3`、`qsqs:wan3-720p-deal` 中当前存在且可用的模型；也可手工添加精确 ID。导入后由管理员配置协议、能力与价格，模型参数使用各自默认能力。插件按当前目录读取版本和可用性，完整请求报价后把 `quote_id` 绑定 `Expected-Quote-Id`，使用固定 `Idempotency-Key` 和完全相同的正文提交；拒绝价格变化时不会自动接受新报价。已受理任务只查询原编号，签名失效时重新获取同一任务地址。下载不携带渠道凭证，也不依赖旧原片质量响应头。素材上传到上游客户图库，插件不自动删除图库文件；图库容量由客户在上游管理。上游积分按次报价，与影策管理员配置的本地计费分开。旧模型是否允许新生成以当前目录为准。
-
-`200t.vinted.mi` v1.1.0 按实时 `x-canvas-inputs` 将素材映射到输入字段；多种类型共用一个字段时保留引用顺序并合并数组。参数只从 `parameter_schema.properties` 构造，支持当前 `quality`/`resolution` 字段和显式默认值；高级参数放在 `providerOptions.200t-vinted-mi.parameters`，仅转发 schema 声明的键。上游报价仍负责最终字段、取值和组合校验；现有 UI 显示三个模型的已知默认配置，目录暂不可用不会删除插件的模型支持。
+`200t.vinted.mi` 及其 C4、阿里 Wan3、Wan3 Deal 默认能力已移除，生成脚本不再生成旧包，模型目录不再返回这些模型。Seedance 插件独立定义目录、上传、报价与签名下载合同。后端重启时清理旧官方插件注册记录；已保存渠道由管理员手工检查协议、模型和定价后更换，不自动迁移到新模型。
 
 v1.2.0 修正文生视频的业务能力映射：C4、阿里 Wan3 的当前 `input_schema` 仅必填 `prompt`，其 `references` 模式未要求附带素材，所以无素材请求也声明业务能力 `text_to_video`；实际仍发送 `input_mode=references`。Deal 无素材发送 `text`，有素材发送 `references`。模型选择和后端准入同步放开纯文字输入，参数与素材约束继续由实时目录及报价校验。已保存配置只有与此前错误默认值完整一致时才在读取时修正，管理员改过的限制保持原样；无需改写数据库或历史任务。
 
