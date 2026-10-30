@@ -31,10 +31,12 @@ const (
 	AppearanceAssetPoster      = "poster"
 	AppearanceAssetUpdateImage = "update-image"
 	AppearanceAssetUpdateVideo = "update-video"
+
+	AppearanceAssetCustomerServiceQR = "customer-service-qr"
 )
 
 const (
-	appearanceSchemaVersion        = 11
+	appearanceSchemaVersion        = 12
 	appearanceLogoMaxBytes   int64 = 5 << 20
 	appearancePosterMaxBytes int64 = 10 << 20
 	appearanceVideoMaxBytes  int64 = 256 << 20
@@ -74,6 +76,8 @@ type AppearanceSetting struct {
 	ICPFilingEnabled          bool                  `json:"icpFilingEnabled"`
 	ICPFilingNumber           string                `json:"icpFilingNumber"`
 	RedeemPurchaseURL         string                `json:"redeemPurchaseUrl"`
+
+	CustomerService CustomerServiceSetting `json:"customerService"`
 }
 
 type PublicAppearanceSetting struct {
@@ -106,6 +110,8 @@ type PublicAppearanceSetting struct {
 	Configured                bool                `json:"configured"`
 	Revision                  string              `json:"revision"`
 	UpdatedAt                 time.Time           `json:"updatedAt,omitempty"`
+
+	CustomerService PublicCustomerServiceSetting `json:"customerService"`
 }
 
 type AdminAppearanceSetting struct {
@@ -119,6 +125,7 @@ type AdminAppearanceSetting struct {
 
 func defaultAppearanceSetting() AppearanceSetting {
 	return AppearanceSetting{
+		CustomerService:   defaultCustomerServiceSetting(),
 		Canvas:            defaultCanvasAppearance(),
 		SchemaVersion:     appearanceSchemaVersion,
 		BrandName:         defaultAppearanceBrandName,
@@ -135,7 +142,7 @@ func defaultAppearanceSetting() AppearanceSetting {
 func AppearanceAssetMaxBytes(slot string) (int64, error) {
 	slot = strings.TrimSpace(slot)
 	switch strings.TrimSpace(slot) {
-	case AppearanceAssetLogo, AppearanceAssetDarkLogo:
+	case AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetCustomerServiceQR:
 		return appearanceLogoMaxBytes, nil
 	case AppearanceAssetPoster, AppearanceAssetUpdateImage:
 		return appearancePosterMaxBytes, nil
@@ -151,7 +158,7 @@ func appearanceSlotIsVideo(slot string) bool {
 }
 
 func appearanceAssetSlots() []string {
-	return []string{AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetVideo, AppearanceAssetPoster}
+	return []string{AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetVideo, AppearanceAssetPoster, AppearanceAssetCustomerServiceQR}
 }
 
 func (s *Service) Appearance() (*PublicAppearanceSetting, error) {
@@ -201,6 +208,10 @@ func (s *Service) UpdateAppearance(actor *model.User, value AppearanceSetting) (
 		return nil, updatesErr
 	}
 	value.Updates = updates
+	value.CustomerService = normalizeCustomerService(value.CustomerService)
+	if err := validateCustomerService(value.CustomerService); err != nil {
+		return nil, err
+	}
 	value.BrandName = strings.TrimSpace(value.BrandName)
 	value.BrandSlug = strings.ToLower(strings.TrimSpace(value.BrandSlug))
 	value.AuthHeroTitle = normalizeAppearanceCopy(value.AuthHeroTitle)
@@ -260,6 +271,7 @@ func (s *Service) UpdateAppearance(actor *model.User, value AppearanceSetting) (
 		{slot: AppearanceAssetDarkLogo, resourceID: value.DarkLogoResourceID, currentID: before.DarkLogoResourceID},
 		{slot: AppearanceAssetVideo, resourceID: value.AuthVideoResourceID, currentID: before.AuthVideoResourceID},
 		{slot: AppearanceAssetPoster, resourceID: value.AuthVideoPosterResourceID, currentID: before.AuthVideoPosterResourceID},
+		{slot: AppearanceAssetCustomerServiceQR, resourceID: value.CustomerService.QRCodeResourceID, currentID: before.CustomerService.QRCodeResourceID},
 	} {
 		if err := s.validateAppearanceResource(actor, candidate.slot, candidate.resourceID, candidate.currentID); err != nil {
 			return nil, err
@@ -339,6 +351,9 @@ func (s *Service) OpenAppearanceAsset(slot string, rangeHeader string) (*Resourc
 	if err != nil {
 		return nil, err
 	}
+	if slot == AppearanceAssetCustomerServiceQR && !value.CustomerService.Enabled {
+		return nil, NotFound("客服入口未启用")
+	}
 	resourceID := appearanceResourceID(value, slot)
 	if resourceID == "" {
 		return nil, NotFound("未配置该外观资源")
@@ -360,6 +375,9 @@ func (s *Service) PrepareAppearanceAssetDelivery(slot string, options ResourceAc
 	_, value, err := s.readAppearance()
 	if err != nil {
 		return nil, err
+	}
+	if slot == AppearanceAssetCustomerServiceQR && !value.CustomerService.Enabled {
+		return nil, NotFound("客服入口未启用")
 	}
 	resourceID := appearanceResourceID(value, slot)
 	if resourceID == "" {
@@ -400,6 +418,7 @@ func (s *Service) appearanceResourceReferences(resourceIDs []string) map[string]
 		{resourceID: value.DarkLogoResourceID, title: "深色模式品牌 Logo"},
 		{resourceID: value.AuthVideoResourceID, title: "登录页品牌视频"},
 		{resourceID: value.AuthVideoPosterResourceID, title: "登录页视频封面"},
+		{resourceID: value.CustomerService.QRCodeResourceID, title: "客服二维码"},
 		{resourceID: value.Canvas.Live2DResourceID, title: "画布 Agent Live2D 形象"},
 		{resourceID: value.Canvas.AvatarBundleResourceID, title: "画布 Agent 动画包"},
 	}
@@ -493,6 +512,8 @@ func (s *Service) resolveAvailableAppearanceAssets(value AppearanceSetting) Appe
 			value.AuthVideoResourceID = ""
 		case AppearanceAssetPoster:
 			value.AuthVideoPosterResourceID = ""
+		case AppearanceAssetCustomerServiceQR:
+			value.CustomerService.QRCodeResourceID = ""
 		}
 	}
 	if value.Canvas.AvatarBundleResourceID != "" && !s.agentAvatarBundleAvailable(value.Canvas.AvatarBundleResourceID) {
@@ -697,6 +718,8 @@ func appearanceAssetLabel(slot string) string {
 		return "公告图片"
 	case AppearanceAssetUpdateVideo:
 		return "公告视频"
+	case AppearanceAssetCustomerServiceQR:
+		return "客服二维码"
 	default:
 		return "外观资源"
 	}
@@ -712,6 +735,8 @@ func appearanceResourceID(value AppearanceSetting, slot string) string {
 		return value.AuthVideoResourceID
 	case AppearanceAssetPoster:
 		return value.AuthVideoPosterResourceID
+	case AppearanceAssetCustomerServiceQR:
+		return value.CustomerService.QRCodeResourceID
 	default:
 		return ""
 	}
@@ -723,6 +748,7 @@ func publicAppearanceSetting(setting *model.SystemSetting, value AppearanceSetti
 		revision = strconv.FormatInt(setting.UpdatedAt.UTC().UnixNano(), 36)
 	}
 	result := &PublicAppearanceSetting{
+		CustomerService:     publicCustomerService(value.CustomerService, revision),
 		Updates:             publicUpdateAnnouncement(value.Updates, revision),
 		Canvas:              value.Canvas,
 		SchemaVersion:       appearanceSchemaVersion,

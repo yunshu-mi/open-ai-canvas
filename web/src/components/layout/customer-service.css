@@ -1,0 +1,33 @@
+.customer-service-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-6);
+    color: var(--foreground);
+    text-align: center;
+    overflow-wrap: anywhere;
+    max-height: calc(100dvh - 14rem);
+    overflow-y: auto;
+}
+
+.customer-service-content p {
+    margin: 0;
+}
+.customer-service-description {
+    white-space: pre-wrap;
+}
+.customer-service-qr {
+    width: 224px;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.customer-service-contact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    white-space: pre-wrap;
+    user-select: text;
+}

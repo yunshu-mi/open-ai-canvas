@@ -59,7 +59,7 @@ export function WorkspaceAccountMenu() {
             onPointerEnter={preloadAuthVideo}
             onFocus={preloadAuthVideo}
             onPointerDown={preloadAuthVideo}
-            className="app-workspace-topbar-login-button inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--r-full)] border border-[var(--user-border)] bg-[var(--user-surface)] px-3 text-[length:var(--fs-caption)] font-medium text-[var(--user-ink)] hover:border-[var(--user-border-strong)] hover:bg-[var(--user-surface-hover)] active:bg-[var(--user-control-pressed)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--user-accent)]"
+            className="app-workspace-topbar-login-button inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--r-md)] px-3.5 text-[length:var(--fs-ui)] font-[550] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--user-accent)]"
             aria-label="登录"
             title="登录"
         >

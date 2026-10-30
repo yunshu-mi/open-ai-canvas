@@ -7,6 +7,7 @@ const (
 	Live2DMaxBytes                     = app.Live2DMaxBytes
 	AnnouncementImageMaxBytes          = app.AnnouncementImageMaxBytes
 	AppearanceAssetDarkLogo            = app.AppearanceAssetDarkLogo
+	AppearanceAssetCustomerServiceQR   = app.AppearanceAssetCustomerServiceQR
 	AppearanceAssetLogo                = app.AppearanceAssetLogo
 	AppearanceAssetPoster              = app.AppearanceAssetPoster
 	AppearanceAssetVideo               = app.AppearanceAssetVideo
