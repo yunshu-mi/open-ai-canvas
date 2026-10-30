@@ -253,7 +253,8 @@ export default function AppearanceSettingsPage() {
         if (!setting?.configured || saving || refreshing || restoring || canvasUploading) return;
         modal.confirm({
             title: "恢复影策默认品牌标识？",
-            content: "品牌名称、英文标识、Logo、客服、画布 Agent 名称/文案/形象、更新公告、登录页文案、视频、封面、SEO、备案和皮肤主题会立即恢复为项目内置值；客服会清空并关闭，自定义公告会清空并关闭，展示原有更新日志。已上传文件仍保留在存储资源中，不会被删除。",
+            content:
+                "品牌名称、英文标识、Logo、客服、画布 Agent 名称/文案/形象、更新公告、登录页文案、视频、封面、SEO、备案和皮肤主题会立即恢复为项目内置值；客服会清空并关闭，自定义公告会清空并关闭，展示原有更新日志。已上传文件仍保留在存储资源中，不会被删除。",
             okText: "恢复默认",
             cancelText: "取消",
             okButtonProps: { danger: true },
@@ -809,7 +810,22 @@ export default function AppearanceSettingsPage() {
                             },
                             { key: "canvas", label: "画布配置", children: <CanvasAppearanceEditor value={canvas} onChange={setCanvas} disabled={saving || refreshing || restoring || canvasUploading} onUploading={setCanvasUploading} /> },
                             { key: "updates", label: "更新公告", children: <UpdateAnnouncementEditor value={updates} onChange={setUpdates} disabled={saving || refreshing || restoring || canvasUploading} onUploading={setCanvasUploading} /> },
-                            { key: "customer-service", label: "客服配置", children: <CustomerServiceEditor value={customerService} onChange={setCustomerService} file={files["customer-service-qr"]} removed={resets["customer-service-qr"]} inputRef={inputRefs["customer-service-qr"]} onSelect={selectFile} onReset={resetAsset} disabled={saving || refreshing || restoring || canvasUploading} /> },
+                            {
+                                key: "customer-service",
+                                label: "客服配置",
+                                children: (
+                                    <CustomerServiceEditor
+                                        value={customerService}
+                                        onChange={setCustomerService}
+                                        file={files["customer-service-qr"]}
+                                        removed={resets["customer-service-qr"]}
+                                        inputRef={inputRefs["customer-service-qr"]}
+                                        onSelect={selectFile}
+                                        onReset={resetAsset}
+                                        disabled={saving || refreshing || restoring || canvasUploading}
+                                    />
+                                ),
+                            },
                         ]}
                     />
                 </div>

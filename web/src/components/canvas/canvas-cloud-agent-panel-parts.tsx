@@ -115,7 +115,7 @@ export const AgentLauncher = memo(function AgentLauncher({
     const largeAvatar = live || media || bundleManifestLoading;
     // 收起后只留小圆球入口：不加载 Live2D / 动画，也不挡画布。位置以右下角为锚点，收起展开不跳位。
     const keepsAvatarSize = largeAvatar && !collapsed;
-    const height = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.max(40, Math.min(appearance.avatarHeight * 2 / 3, viewport.height - 60, (viewport.width - 40) / aspectRatio)) : 76;
+    const height = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.max(40, Math.min((appearance.avatarHeight * 2) / 3, viewport.height - 60, (viewport.width - 40) / aspectRatio)) : 76;
     const width = collapsed ? AGENT_LAUNCHER_COLLAPSED_SIZE : keepsAvatarSize ? Math.round(height * aspectRatio) : 76;
     const { position, dragging, handlers } = useAgentLauncherPosition(onOpen, width, height);
     const showToggle = !hidden && (largeAvatar || collapsed);
