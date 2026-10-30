@@ -1443,6 +1443,81 @@ C4 支持 4–15 整数秒、720p、9 图/3 视频/3 音频；图片宽高须大
   }
 });
 
+// 新 Seedance 与旧 Vinted 共用受理、回查和签名下载合同，模型及准备请求独立声明。
+const vintedLegacySpec = specs.find((spec) => spec.id === "200t.vinted.mi");
+const seedanceModels = ["seedance-2.0", "seedance-2.0-fast", "seedance-2.5"];
+const seedanceFrames = gt(len(mediaWithRoles("request.images", ["first_frame", "last_frame"])), 0);
+const seedanceMode = conditional(seedanceFrames, "frames", conditional(vintedHasMedia, "references", "text"));
+const seedanceImageRefs = conditional(seedanceFrames, { $concatArrays: [
+  filter(ref("request.extra.preparation.images"), "item", eq(ref("item.role"), "first_frame")),
+  filter(ref("request.extra.preparation.images"), "item", eq(ref("item.role"), "last_frame"))
+] }, ref("request.extra.preparation.images"));
+const seedanceBody = {
+  model_id: ref("request.model"), catalog_revision: ref(`${vintedCatalog}.revision`), input_mode: seedanceMode,
+  input: { $merge: [{ prompt: ref("request.prompt") }, { $object: {
+    from: vintedInputFields, as: "field", key: ref("field"),
+    value: vintedAssetRefs(filter({ $concatArrays: [seedanceImageRefs, ref("request.extra.preparation.videos"), ref("request.extra.preparation.audios")] }, "item", eq(get(ref(`${vintedCatalog}.model.x-canvas-inputs`), ref("item.kind")), ref("field"))))
+  } }] },
+  parameters: { $object: {
+    from: ref(`${vintedCatalog}.model.parameter_schema.properties`), as: "parameter",
+    value: coalesce(vintedParameterValue, get(ref("request.providerOptions.200t-video-tv.parameters"), ref("parameterKey")), ref("parameter.default"))
+  } }
+};
+add({
+  ...vintedLegacySpec,
+  id: "200t.video.tv", providerId: "200t-video-tv", name: "200t.video.tv", vendor: "200t / Vinted", version: "1.0.0",
+  params: videoParams.filter(([name]) => !["watermark", "generateAudio"].includes(name)).map((item) => item[0] === "model" ? ["model", "string", true, "model_id", `仅支持 ${seedanceModels.join("、")}。`] : item),
+  notes: `接入文档：https://vinted.cam/developers#start 。安装 200t.video.tv.yingce-plugin 后，在渠道协议中选择 200t.video.tv，Base URL 填 https://vinted.cam（不含 /v1），填写本人 sk- API Key，拉取并选择 seedance-2.0、seedance-2.0-fast 或 seedance-2.5。按次计费，实际积分以完整请求报价为准，不内置截图价格。
+
+2.0 与 2.0 Fast 支持 4–15 整数秒，2.5 支持 4–30 整数秒；均支持 480p/720p、10000 字提示词、最多 9 图/3 视频/3 音频。图片每个最多 20 MiB，音视频每个最多 100 MiB。音频须搭配图片或视频，不提供声音生成或水印开关。默认 10 秒、9:16、720p；最终参数和组合由当前目录及报价校验。
+
+无素材使用 text；普通参考图、视频及音频使用 references，画幅仅 16:9/9:16/4:3/3:4/1:1。显式 first_frame/last_frame 使用目录声明的 frames，首帧必填，尾帧可选，按首尾顺序发送，不混用其他参考；2.5 的 frames 只能选 adaptive，其他两个模型仍用固定画幅。
+
+每次生成读取有效且 ready 的 /v1/catalog，核对模型 available 与输入映射；通过 /v1/files/content 发送原始素材字节和类型、名称、Content-Length，得到 asset_id 后按 x-canvas-inputs 构造输入。仅发送 parameter_schema.properties 声明的参数；扩展放 providerOptions.200t-video-tv.parameters，不能覆盖已选择的统一参数。
+
+完整请求先 POST /v1/videos/quote，要求正整数 credits、有效 quote_id 和相同 catalog_revision，再以完全相同正文及 Expected-Quote-Id、固定 Idempotency-Key 提交。报价错误或价格变化不自动换报价。网络重试最多三次且复用正文与编号；无任务编号但受理不明时保留操作编号，用原 Key 查询 /v1/submissions/{key}，不得另建订单。有任务编号后只恢复该任务查询。上游报价记录在任务日志中，不替代影策渠道自身的计价配置。
+
+queued/running、归档未完成继续等待；failed 只有明确补交且原结算不变时恢复原片。成功后请求 signed_url，独立匿名下载、立即由宿主持久化，不向媒体地址发送 Key。当前宿主不提供按上游操作编号恢复的独立 UI，未知受理须按日志编号人工核对。`,
+  validations: [
+    { assert: { $in: [ref("request.model"), seedanceModels] }, message: "200t.video.tv 仅支持 Seedance 2.0、2.0 Fast、2.5" },
+    { assert: and(gt(len(trim(ref("request.prompt"))), 0), lte(len(ref("request.prompt")), 10000)), message: "提示词须为 1–10000 字符" },
+    { assert: and(gte(ref("request.duration"), 4), lte(ref("request.duration"), conditional(eq(ref("request.model"), "seedance-2.5"), 30, 15))), message: "Seedance 2.0/Fast 时长为 4–15 秒，2.5 为 4–30 秒" },
+    { assert: { $in: [ref("request.resolution"), ["480p", "720p"]] }, message: "200t.video.tv 仅支持 480p 或 720p" },
+    { assert: { $in: [ref("request.aspectRatio"), conditional(and(seedanceFrames, eq(ref("request.model"), "seedance-2.5")), ["adaptive"], ["16:9", "9:16", "4:3", "3:4", "1:1"])] }, message: "2.5 首尾帧须选 adaptive；其余输入须选五种固定画幅" },
+    { assert: and(lte(len(ref("request.images")), 9), lte(len(ref("request.videos")), 3), lte(len(ref("request.audios")), 3)), message: "参考素材最多 9 张图片、3 段视频、3 段音频" },
+    { assert: conditional(gt(len(ref("request.audios")), 0), gt(addNumbers(len(ref("request.images")), len(ref("request.videos"))), 0), true), message: "音频参考须搭配图片或视频" },
+    { assert: conditional(seedanceFrames, and(eq(len(mediaWithRoles("request.images", ["first_frame"])), 1), lte(len(mediaWithRoles("request.images", ["last_frame"])), 1), eq(len(mediaWithRoles("request.images", ["first_frame", "last_frame"])), len(ref("request.images"))), eq(len(ref("request.videos")), 0), eq(len(ref("request.audios")), 0)), true), message: "首尾帧须有一张首帧、至多一张尾帧，不能混用参考图或音视频" }
+  ],
+  lifecycle: {
+    ...vintedLegacySpec.lifecycle,
+    mediaLimits: {
+      images: { ...vintedLegacySpec.lifecycle.mediaLimits.images, fileBytes: 20 * 1024 * 1024, totalBytes: 180 * 1024 * 1024 },
+      videos: { ...vintedLegacySpec.lifecycle.mediaLimits.videos, fileBytes: 100 * 1024 * 1024, totalBytes: 300 * 1024 * 1024 },
+      audios: { ...vintedLegacySpec.lifecycle.mediaLimits.audios, fileBytes: 100 * 1024 * 1024, totalBytes: 300 * 1024 * 1024 }
+    },
+    prepare: [
+      {
+        ...vintedLegacySpec.lifecycle.prepare[0],
+        validations: vintedLegacySpec.lifecycle.prepare[0].validations.map((rule, index) => index === 2 ? { ...rule, assert: { $in: [seedanceMode, get(vintedModel, "input_modes")] } } : rule)
+      },
+      ...vintedUploadSteps.map((step) => ({
+        ...step,
+        operation: {
+          method: "POST", path: "/v1/files/content", originPath: true, contentType: "application/octet-stream",
+          query: { kind: { images: "image", videos: "video", audios: "audio" }[step.source], name: coalesce(omit(ref("request.extra.prepareItem.name")), `reference-${step.source}`) },
+          body: ref("request.extra.prepareItem.dataUrl")
+        }
+      })),
+      {
+        id: "quote", operation: jsonCreate("/v1/videos/quote", seedanceBody, { originPath: true }),
+        value: { body: seedanceBody, id: ref("response.quote_id") },
+        validations: [{ assert: and(gt(len(ref("response.quote_id")), 0), ne(ref("response.credits"), null), eq(ref("response.credits"), toInt(ref("response.credits"))), gt(ref("response.credits"), 0), eq(ref("response.catalog_revision"), ref(`${vintedCatalog}.revision`))), message: "报价缺少有效编号、正整数积分或目录版本，未提交生成" }],
+        message: { $concat: ["200t.video.tv 本次上游报价：", ref("response.credits"), " 积分；操作编号：", ref("request.extra.idempotencyKey")] }
+      }
+    ]
+  }
+});
+
 function manifestFor(spec) {
   return {
     apiVersion: "yingce.plugin/v2",
