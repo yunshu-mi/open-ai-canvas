@@ -47,6 +47,7 @@ function harness(k = 1, boxSelectEnabled = true) {
     const properties = new Map([["--canvas-committed-scale", String(k)]]);
     class Element extends EventTarget {
         closest() { return null; }
+        contains(target) { return target === this; }
     }
     const container = Object.assign(new Element(), {
         dataset: {},
@@ -93,7 +94,7 @@ function harness(k = 1, boxSelectEnabled = true) {
     };
     const module = { exports: {} };
     runInNewContext(source, {
-        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, document: { body },
+        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, performance, document: { body },
         ResizeObserver: class { observe() {} disconnect() {} },
         requestAnimationFrame: (fn) => { frames.set(++frameId, fn); return frameId; },
         cancelAnimationFrame: (id) => frames.delete(id),
