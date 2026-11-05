@@ -132,8 +132,11 @@ func finishProtocolAdapterResult(ctx context.Context, input canvasGenerationInpu
 		if err != nil {
 			return nil, "", err
 		}
+		if state.Status == protocol.StatusFailed || state.Status == protocol.StatusCancelled {
+			return nil, "", protocolTaskFailure(ctx, state.Status, state.Message, taskID)
+		}
 		if state.Status != protocol.StatusSucceeded || !protocolResultHasOutput(input.Mode, state.Result) {
-			return nil, "", protocolResultError(state.Message, taskID)
+			return nil, "", errors.New(firstNonEmpty(strings.TrimSpace(state.Message), "声明式协议结果未返回可下载媒体"))
 		}
 		var reference protocol.MediaReference
 		switch input.Mode {
