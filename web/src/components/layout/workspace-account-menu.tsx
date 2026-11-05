@@ -2,14 +2,14 @@ import { Popover } from "antd";
 import { Switch } from "@/components/ui/base/switch";
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 
+import { AuthLoginLink } from "@/components/auth/auth-login-link";
 import { AppChangelogButton } from "@/components/layout/app-changelog-modal";
 import { WorkspaceAccountCard } from "./workspace-account-card";
 import { UserAvatar } from "./user-avatar";
 import { UserGroupAvatarRing } from "./user-group-badge";
 import { openWorkspaceWallet } from "@/lib/workspace-wallet";
-import { preloadAuthVideo } from "@/services/auth-video";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { useUserStore } from "@/stores/use-user-store";
 
@@ -20,7 +20,7 @@ export function WorkspaceAccountMenu() {
     const user = useUserStore((state) => state.user);
     const hydrated = useUserStore((state) => state.hydrated);
     const [menuOpen, setMenuOpen] = useState(false);
-
+    const { t } = useTranslation();
     if (!hydrated) {
         return <span className="size-9 animate-pulse rounded-[var(--r-md)] bg-foreground/[.06]" aria-hidden />;
     }
@@ -43,27 +43,24 @@ export function WorkspaceAccountMenu() {
 
                     <div className="workspace-topbar-account-theme">
                         {theme === "dark" ? <Moon className="size-3.5 text-foreground/45" /> : <Sun className="size-3.5 text-foreground/45" />}
-                        <span className="ml-2 flex-1 text-xs text-foreground/65">深色模式</span>
-                        <Switch size="sm" checked={theme === "dark"} onChange={(checked) => setTheme(checked ? "dark" : "light")} aria-label="深色模式" />
+                        <span className="ml-2 flex-1 text-xs text-foreground/65">{t("shell.darkMode")}</span>
+                        <Switch size="sm" checked={theme === "dark"} onChange={(checked) => setTheme(checked ? "dark" : "light")} aria-label={t("shell.darkMode")} />
                     </div>
+
                 </div>
             )}
         >
-            <button type="button" className="app-workspace-topbar-icon-button app-workspace-account-trigger" aria-label="账户菜单" title={user.displayName || user.username}>
+            <button type="button" className="app-workspace-topbar-icon-button app-workspace-account-trigger" aria-label={t("shell.accountMenu")} title={user.displayName || user.username}>
                 <UserGroupAvatarRing><UserAvatar user={user} className="size-6" /></UserGroupAvatarRing>
             </button>
         </Popover></>
     ) : (
-        <Link
-            to="/login"
-            onPointerEnter={preloadAuthVideo}
-            onFocus={preloadAuthVideo}
-            onPointerDown={preloadAuthVideo}
+        <AuthLoginLink
             className="app-workspace-topbar-login-button inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--r-md)] px-3.5 text-[length:var(--fs-ui)] font-[550] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--user-accent)]"
-            aria-label="登录"
-            title="登录"
+            aria-label={t("shell.login")}
+            title={t("shell.login")}
         >
-            登录
-        </Link>
+            {t("shell.login")}
+        </AuthLoginLink>
     );
 }
