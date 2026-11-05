@@ -11,13 +11,13 @@ let visibility: (entries: { isIntersecting: boolean }[]) => void;
 const cleanups: (() => void)[] = [];
 class FakeVideo extends EventTarget {
     paused = true; currentTime = 0; src = ""; muted = false; playsInline = false; preload = "";
-    className = ""; dataset: Record<string, string> = {}; removed = false; loads = 0;
+    className = ""; dataset: Record<string, string> = {}; style = { opacity: "" }; removed = false; loads = 0;
     setAttribute() {}
     removeAttribute() { this.src = ""; }
     load() { this.loads++; }
     remove() { this.removed = true; }
     pause() { this.paused = true; }
-    async play() { this.paused = false; this.dispatchEvent(new Event("playing")); }
+    async play() { this.paused = false; }
 }
 class FakeElement extends EventTarget {
     isConnected = true;
@@ -68,6 +68,15 @@ test("hover is muted and capped at first three seconds; resources are released",
     expect(video.muted).toBe(true); expect(video.playsInline).toBe(true);
     video.currentTime = 3; video.dispatchEvent(new Event("timeupdate"));
     expect(video.paused).toBe(true); expect(video.src).toBe(""); expect(video.loads).toBe(1); expect(video.removed).toBe(true);
+});
+test("keeps the poster visible until hover playback starts", async () => {
+    const element = setup(); enter(element); await wait();
+    const video = videos[0];
+    expect(video.style.opacity).toBe("0");
+    video.dispatchEvent(new Event("playing"));
+    expect(video.style.opacity).toBe("");
+    element.dispatchEvent(new Event("pointerleave"));
+    expect(video.removed).toBe(true);
 });
 test("new hover cancels previous decoder and ignores stale URL resolution", async () => {
     let resolve!: (value: string) => void;
