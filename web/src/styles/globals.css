@@ -15141,6 +15141,7 @@
         gap: var(--space-3);
         overflow: hidden;
         padding: var(--space-4);
+        background-color: var(--canvas-gen-surface);
         color: var(--canvas-gen-ink);
         text-align: center;
         container-type: size;

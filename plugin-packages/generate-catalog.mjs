@@ -1374,7 +1374,8 @@ const vintedParameterValue = { $switch: {
   ], default: null
 } };
 const vintedRecovered = and(eq(ref("response.status"), "failed"), eq(ref("response.refunded"), true), eq(ref("response.has_file"), true), eq(ref("response.recovered_artifact.available"), true), eq(ref("response.recovered_artifact.settlement_unchanged"), true));
-const seedanceModels = ["seedance-2.0", "seedance-2.0-fast", "seedance-2.5"];
+const seedanceModels = ["seedance-2.0", "seedance-2.0-fast", "seedance-2.5", "seedance-2.5-special"];
+const seedanceSpecial = eq(ref("request.model"), "seedance-2.5-special");
 const seedanceFrames = gt(len(mediaWithRoles("request.images", ["first_frame", "last_frame"])), 0);
 const seedanceMode = conditional(seedanceFrames, "frames", conditional(vintedHasMedia, "references", "text"));
 const seedanceImageRefs = conditional(seedanceFrames, { $concatArrays: [
@@ -1389,18 +1390,24 @@ const seedanceBody = {
   } }] },
   parameters: { $object: {
     from: ref(`${vintedCatalog}.model.parameter_schema.properties`), as: "parameter",
-    value: coalesce(vintedParameterValue, get(ref("request.providerOptions.200t-video-tv.parameters"), ref("parameterKey")), ref("parameter.default"))
+    value: coalesce(ref("parameter.const"), vintedParameterValue, get(ref("request.providerOptions.200t-video-tv.parameters"), ref("parameterKey")), ref("parameter.default"))
   } }
 };
 add({
-  id: "200t.video.tv", providerId: "200t-video-tv", name: "200t.video.tv", vendor: "200t / Vinted", capability: "video", version: "1.0.0",
+  id: "200t.video.tv", providerId: "200t-video-tv", name: "200t.video.tv", vendor: "200t / Vinted", capability: "video", version: "1.1.1",
   baseUrl: "https://vinted.cam", auth: bearer,
   params: videoParams.filter(([name]) => !["watermark", "generateAudio"].includes(name)).map((item) => item[0] === "model" ? ["model", "string", true, "model_id", `仅支持 ${seedanceModels.join("、")}。`] : item),
-  notes: `接入文档：https://vinted.cam/developers#start 。安装 200t.video.tv.yingce-plugin 后，在渠道协议中选择 200t.video.tv，Base URL 填 https://vinted.cam（不含 /v1），填写本人 sk- API Key，拉取并选择 seedance-2.0、seedance-2.0-fast 或 seedance-2.5。按次计费，实际积分以完整请求报价为准，不内置截图价格。
+  notes: `接入文档：https://vinted.cam/developers#start 。安装 200t.video.tv.yingce-plugin 后，在渠道协议中选择 200t.video.tv，Base URL 填 https://vinted.cam（不含 /v1），填写本人 sk- API Key。支持 seedance-2.0、seedance-2.0-fast、seedance-2.5 和 seedance-2.5-special（Seedance 2.5 专线）。按次计费，实际积分以完整请求报价为准，不内置截图价格。
 
-2.0 与 2.0 Fast 支持 4–15 整数秒，2.5 支持 4–30 整数秒；均支持 480p/720p、10000 字提示词、最多 9 图/3 视频/3 音频。图片每个最多 20 MiB，音视频每个最多 100 MiB。音频须搭配图片或视频，不提供声音生成或水印开关。默认 10 秒、9:16、720p；最终参数和组合由当前目录及报价校验。
+1.1.0 新增专线，只修改插件合同，不要求宿主新增接口或迁移数据库。当前宿主的模型拉取白名单不包含专线，请在后台手工添加精确模型 ID seedance-2.5-special，选择 200t-video-tv 协议，配置时长 4–30 秒（默认 10）、分辨率 1080p（默认 1080p）、画幅 21:9/16:9/4:3/1:1/3:4/9:16（默认 16:9），并按实际成本配置本地售价。后台同步专线能力可避免界面沿用旧模型的画质文字和 15 秒时长范围。素材限制由现有后台配置管理，不改动公共默认值，不增加画幅联动。
 
-无素材使用 text；普通参考图、视频及音频使用 references，画幅仅 16:9/9:16/4:3/3:4/1:1。显式 first_frame/last_frame 使用目录声明的 frames，首帧必填，尾帧可选，按首尾顺序发送，不混用其他参考；2.5 的 frames 只能选 adaptive，其他两个模型仍用固定画幅。
+1.1.1 修正专线固定画质的前置校验：专线始终按实时目录的 resolution.const 提交 1080p，忽略画布保留的旧画质选项，不因仍显示 720P 而拒绝生成。画布显示文字由宿主能力配置决定，插件不会修改画布配置或界面。非专线模型继续按原有 480p/720p 校验。
+
+专线当前仅支持 text / references；图片最多 9 张、音频最多 3 段，参考模式必须有图片，不支持音频单独输入、参考视频或首尾帧。重复图片或音频引用不符合当前 schema；实际数量、大小与组合由实时目录和报价校验。专线画质固定为目录的 resolution.const=1080p，不开放旧模型的 480p/720p。上游暂停旧模型时，插件按 available 拒绝提交，不自动替换为专线或创建其他订单。
+
+三个非专线模型的原有规则：2.0 与 2.0 Fast 支持 4–15 整数秒，2.5 支持 4–30 整数秒；均支持 480p/720p、10000 字提示词、最多 9 图/3 视频/3 音频。图片每个最多 20 MiB，音视频每个最多 100 MiB。音频须搭配图片或视频，不提供声音生成或水印开关。默认 10 秒、9:16、720p；最终参数和组合由当前目录及报价校验。
+
+非专线模型无素材使用 text；普通参考图、视频及音频使用 references，画幅仅 16:9/9:16/4:3/3:4/1:1。显式 first_frame/last_frame 使用目录声明的 frames，首帧必填，尾帧可选，按首尾顺序发送，不混用其他参考；2.5 的 frames 只能选 adaptive，其他两个模型仍用固定画幅。
 
 每次生成读取有效且 ready 的 /v1/catalog，核对模型 available 与输入映射；通过 /v1/files/content 发送原始素材字节和类型、名称、Content-Length，得到 asset_id 后按 x-canvas-inputs 构造输入。仅发送 parameter_schema.properties 声明的参数；扩展放 providerOptions.200t-video-tv.parameters，不能覆盖已选择的统一参数。
 
@@ -1408,11 +1415,12 @@ add({
 
 queued/running、归档未完成继续等待；failed 只有明确补交且原结算不变时恢复原片。成功后请求 signed_url，独立匿名下载、立即由宿主持久化，不向媒体地址发送 Key。当前宿主不提供按上游操作编号恢复的独立 UI，未知受理须按日志编号人工核对。`,
   validations: [
-    { assert: { $in: [ref("request.model"), seedanceModels] }, message: "200t.video.tv 仅支持 Seedance 2.0、2.0 Fast、2.5" },
+    { assert: { $in: [ref("request.model"), seedanceModels] }, message: "200t.video.tv 仅支持 Seedance 2.0、2.0 Fast、2.5 和 2.5 专线" },
     { assert: and(gt(len(trim(ref("request.prompt"))), 0), lte(len(ref("request.prompt")), 10000)), message: "提示词须为 1–10000 字符" },
-    { assert: and(gte(ref("request.duration"), 4), lte(ref("request.duration"), conditional(eq(ref("request.model"), "seedance-2.5"), 30, 15))), message: "Seedance 2.0/Fast 时长为 4–15 秒，2.5 为 4–30 秒" },
-    { assert: { $in: [ref("request.resolution"), ["480p", "720p"]] }, message: "200t.video.tv 仅支持 480p 或 720p" },
-    { assert: { $in: [ref("request.aspectRatio"), conditional(and(seedanceFrames, eq(ref("request.model"), "seedance-2.5")), ["adaptive"], ["16:9", "9:16", "4:3", "3:4", "1:1"])] }, message: "2.5 首尾帧须选 adaptive；其余输入须选五种固定画幅" },
+    { assert: and(gte(ref("request.duration"), 4), lte(ref("request.duration"), conditional({ $in: [ref("request.model"), ["seedance-2.5", "seedance-2.5-special"]] }, 30, 15))), message: "Seedance 2.0/Fast 时长为 4–15 秒，2.5 和专线为 4–30 秒" },
+    { assert: conditional(seedanceSpecial, true, { $in: [ref("request.resolution"), ["480p", "720p"]] }), message: "非专线模型仅支持 480p 或 720p；专线按实时目录固定为 1080p" },
+    { assert: { $in: [ref("request.aspectRatio"), conditional(seedanceSpecial, ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], conditional(and(seedanceFrames, eq(ref("request.model"), "seedance-2.5")), ["adaptive"], ["16:9", "9:16", "4:3", "3:4", "1:1"]))] }, message: "专线支持六种固定画幅；2.5 首尾帧须选 adaptive；其余输入须选五种固定画幅" },
+    { assert: conditional(seedanceSpecial, and(eq(len(ref("request.videos")), 0), { $not: seedanceFrames }), true), message: "Seedance 2.5 专线不支持参考视频或首尾帧，请使用纯文字或图片/音频参考" },
     { assert: and(lte(len(ref("request.images")), 9), lte(len(ref("request.videos")), 3), lte(len(ref("request.audios")), 3)), message: "参考素材最多 9 张图片、3 段视频、3 段音频" },
     { assert: conditional(gt(len(ref("request.audios")), 0), gt(addNumbers(len(ref("request.images")), len(ref("request.videos"))), 0), true), message: "音频参考须搭配图片或视频" },
     { assert: conditional(seedanceFrames, and(eq(len(mediaWithRoles("request.images", ["first_frame"])), 1), lte(len(mediaWithRoles("request.images", ["last_frame"])), 1), eq(len(mediaWithRoles("request.images", ["first_frame", "last_frame"])), len(ref("request.images"))), eq(len(ref("request.videos")), 0), eq(len(ref("request.audios")), 0)), true), message: "首尾帧须有一张首帧、至多一张尾帧，不能混用参考图或音视频" }
@@ -1432,6 +1440,7 @@ queued/running、归档未完成继续等待；failed 只有明确补交且原�
           { assert: and(eq(ref("response.status"), "ready"), gt(len(ref("response.revision")), 0)), message: "上游目录尚未就绪，请稍后重试" },
           { assert: eq(len(filter(ref("response.models"), "item", and(eq(ref("item.id"), ref("request.model")), eq(ref("item.available"), true)))), 1), message: "所选模型当前不可用，未提交生成" },
           { assert: { $in: [seedanceMode, get(vintedModel, "input_modes")] }, message: "当前模型目录未声明所选输入模式" },
+          { assert: conditional(seedanceSpecial, eq(get(get(get(get(vintedModel, "parameter_schema"), "properties"), "resolution"), "const"), "1080p"), true), message: "专线目录未声明固定 1080p 画质，未提交生成" },
           ...[["image", "images"], ["video", "videos"], ["audio", "audios"]].map(([kind, source]) => ({
             assert: conditional(gt(len(ref(`request.${source}`)), 0), gt(len(get(get(vintedModel, "x-canvas-inputs"), kind)), 0), true),
             message: `当前模型目录未声明 ${kind} 素材映射`

@@ -53,6 +53,7 @@ export function bindCanvasVideoHoverPreview(element: HTMLElement, resolveSource:
                 video.playsInline = true;
                 video.preload = "metadata";
                 video.className = "pointer-events-none absolute inset-0 size-full rounded-[var(--node-radius)] bg-black object-contain";
+                video.style.opacity = "0";
                 video.setAttribute("aria-hidden", "true");
                 video.dataset.canvasHoverPreview = "true";
                 video.addEventListener("ended", cancel, { signal: listeners.signal });
@@ -60,9 +61,10 @@ export function bindCanvasVideoHoverPreview(element: HTMLElement, resolveSource:
                 video.addEventListener("timeupdate", () => {
                     if (video && video.currentTime >= VIDEO_HOVER_PREVIEW_MS / 1000) cancel();
                 }, { signal: listeners.signal });
-                video.addEventListener("playing", () => {
-                    if (!playbackTimer) playbackTimer = setTimeout(cancel, VIDEO_HOVER_PREVIEW_MS);
-                }, { signal: listeners.signal });
+                video.addEventListener("playing", function () {
+                    this.style.opacity = "";
+                    playbackTimer = setTimeout(cancel, VIDEO_HOVER_PREVIEW_MS);
+                }, { once: true, signal: listeners.signal });
                 video.src = src;
                 element.appendChild(video);
                 void video.play().catch(cancel);

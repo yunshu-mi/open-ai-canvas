@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { CanvasNode } from "../src/components/canvas/canvas-node";
+import { canvasThemes } from "../src/lib/canvas-theme";
 import { canvasNodeCanResyncTask } from "../src/lib/canvas/canvas-task-state";
 import { subscribeTaskTicker } from "../src/lib/canvas/task-ticker";
 import { CanvasNodeType, type CanvasNodeData } from "../src/types/canvas";
@@ -89,6 +90,16 @@ describe("画布节点生成中", () => {
         expect(markup).toContain("42%");
         expect(markup).toContain("离开页面也会继续生成");
         expect(markup).toContain('data-determinate="true"');
+    });
+
+    test("保留旧视频的节点重新生成时，进度面板使用画布节点底色", async () => {
+        const markup = renderNode({ status: "loading", content: "/previous.mp4", taskId: "task", taskStatus: "running" }, CanvasNodeType.Video);
+        const state = markup.match(/<div class="canvas-gen-state"[^>]*>/)?.[0];
+        expect(state).toContain(`--canvas-gen-surface:${canvasThemes.dark.node.fill}`);
+
+        const styles = await Bun.file(new URL("../src/styles/globals.css", import.meta.url)).text();
+        const stateRule = styles.match(/\.canvas-gen-state\s*\{([^}]+)\}/)?.[1];
+        expect(stateRule).toContain("background-color: var(--canvas-gen-surface);");
     });
 });
 
