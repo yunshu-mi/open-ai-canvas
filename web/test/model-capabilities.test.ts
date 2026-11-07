@@ -2,9 +2,22 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 // Bun 直接执行 TypeScript 测试时需要保留扩展名；生产 tsconfig 不包含 test/。
-import { DEFAULT_VIDEO_PROMPT_MAX_CHARS, defaultModelCapabilityConfig, normalizeImageValue, normalizeVideoValue } from "../src/lib/model-capabilities.ts";
+import { DEFAULT_VIDEO_PROMPT_MAX_CHARS, defaultModelCapabilityConfig, normalizeModelCapabilityConfig, normalizeImageValue, normalizeVideoValue } from "../src/lib/model-capabilities.ts";
 import { imageTierAvailable, imageResolutionTiers } from "../src/lib/image-size-presets.ts";
 import { workflowFieldIsRatioChoices } from "../src/lib/model-capabilities-workflow.ts";
+
+test("legacy boolean thinking capabilities adopt the upstream model contract", () => {
+    for (const enabled of [true, false]) {
+        const legacy = JSON.parse(JSON.stringify(defaultModelCapabilityConfig("openrouter-chat")));
+        legacy.text.thinking = enabled;
+        const normalized = normalizeModelCapabilityConfig(legacy);
+        assert.deepEqual(normalized.text?.thinking, enabled ? undefined : { mode: "none", switch: { kind: "none" }, intensity: { kind: "none" } });
+        assert.equal(normalized.text?.contextWindowTokens, legacy.text.contextWindowTokens);
+    }
+    const modern = defaultModelCapabilityConfig("openrouter-chat");
+    modern.text!.thinking = { mode: "none", switch: { kind: "none" }, intensity: { kind: "none" } };
+    assert.deepEqual(normalizeModelCapabilityConfig(modern).text?.thinking, modern.text!.thinking);
+});
 
 test("workflow ratio choices use the direct selection control only for ratio values", () => {
     const field = { fieldName: "aspectRatio", fieldType: "SELECT", options: ["auto", "9:16", "16:9", "21:9"] };

@@ -177,12 +177,20 @@ function normalizeCapabilityStrings(values: string[]) {
 }
 
 export function normalizeModelCapabilityConfig(config: ModelCapabilityConfig): ModelCapabilityConfig {
+    const thinking = config.text?.thinking as TextThinkingConfig | boolean | undefined;
+    let normalizedThinking: TextThinkingConfig | undefined;
+    if (typeof thinking !== "boolean") {
+        normalizedThinking = thinking;
+    } else if (!thinking) {
+        normalizedThinking = { mode: "none", switch: { kind: "none" }, intensity: { kind: "none" } };
+    }
     return {
         ...config,
         text: config.text
             ? {
                   ...config.text,
                   streaming: config.text.streaming !== false,
+                  thinking: normalizedThinking,
                   contextWindowTokens: config.text.contextWindowTokens || 128_000,
                   maxOutputTokens: config.text.maxOutputTokens || 16_384,
               }
