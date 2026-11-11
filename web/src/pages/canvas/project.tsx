@@ -206,8 +206,6 @@ const CanvasDrawingEditorModal = lazy(() => import("@/components/canvas/canvas-d
 
 const CanvasTextEditorModal = lazy(() => import("@/components/canvas/canvas-text-editor-modal").then((module) => ({ default: module.CanvasTextEditorModal })));
 
-
-
 const CanvasImageCompareModal = lazy(() => import("@/components/canvas/canvas-image-compare-modal").then((module) => ({ default: module.CanvasImageCompareModal })));
 
 const NODE_STATUS_SUCCESS = "success" as const;
