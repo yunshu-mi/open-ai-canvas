@@ -82,7 +82,7 @@ function harness(scale = 0.5) {
             ref.current = node;
             mounted.add(ref);
             if (element.type === "input") range = node;
-            if (element.type === "span" && props.className?.includes("rounded-full")) panel = node;
+            if (element.type === "span" && /^\d+%$/.test(text)) panel = node;
         }
         if (element.type === "dock") { items = props.items; props.items.forEach(item => attach(item.icon, mounted)); }
         attach(props.children, mounted);

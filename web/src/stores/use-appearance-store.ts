@@ -6,6 +6,7 @@ import { DEFAULT_CUSTOMER_SERVICE } from "@/lib/customer-service";
 import type { PublicAppearance } from "@/services/api/appearance";
 import { composeDocumentTitle } from "@/lib/document-title";
 import { applySkinTheme, DEFAULT_CLASSIC_SKIN, normalizeSkinDefinition } from "@/lib/skin-themes";
+import { applyThemeBrandVariables, applyThemePackCanvas } from "@/themes/apply";
 import { useDocumentTitleStore } from "@/stores/use-document-title-store";
 
 export const DEFAULT_PUBLIC_APPEARANCE: PublicAppearance = {
@@ -122,6 +123,8 @@ function normalizeAppearanceCopy(value: unknown, fallback: string, allowEmpty = 
 
 export function commitPublicAppearance(value?: Partial<PublicAppearance> | null) {
     const appearance = normalizePublicAppearance(value);
+    applyThemePackCanvas(appearance.activeSkin.id);
+    applyThemeBrandVariables(appearance.brandName);
     useAppearanceStore.getState().setAppearance(appearance);
     applySkinTheme(appearance.activeSkin, typeof document !== "undefined" && document.documentElement.classList.contains("dark") ? "dark" : "light");
     applyAppearanceMetadata(appearance);
