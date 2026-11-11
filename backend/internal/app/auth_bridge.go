@@ -27,7 +27,7 @@ type (
 	EmailLogPage               = auth.EmailLogPage
 	LinuxDOSettingRequest      = auth.LinuxDOSettingRequest
 	PublicLinuxDOSetting       = auth.PublicLinuxDOSetting
-	LinuxDOCallbackResult      = auth.LinuxDOCallbackResult
+	LinuxDOCallbackResult      = auth.OAuthCallbackResult
 )
 
 type authHost struct {
@@ -203,6 +203,13 @@ func (s *Service) CompleteLinuxDOLogin(stateValue string, code string, cookieVal
 	return s.authDomain().CompleteLinuxDOLogin(stateValue, code, cookieValue, contexts...)
 }
 
+func (s *Service) BeginOIDCLogin(ctx context.Context, next string, acceptedTerms bool) (string, string, error) {
+	return s.authDomain().BeginOIDCLogin(ctx, next, acceptedTerms)
+}
+
+func (s *Service) CompleteOIDCLogin(ctx context.Context, state, code string, login LoginContext) (*auth.OAuthCallbackResult, error) {
+	return s.authDomain().CompleteOIDCLogin(ctx, state, code, login)
+}
 func hashPassword(password string) (string, error) {
 	return auth.HashPassword(password)
 }
