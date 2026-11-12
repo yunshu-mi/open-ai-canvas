@@ -294,7 +294,11 @@ test("右键拖动平移画布并抑制菜单，右键单击仍保留菜单", as
         };
         const pointer = async (type: string, x: number, y: number) => {
             const target = type === "pointerdown" ? canvas : window;
-            await act(async () => target.dispatchEvent(new dom.PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 2, pointerType: "mouse", button: 2, clientX: x, clientY: y }) as unknown as Event));
+            await act(async () =>
+                target.dispatchEvent(
+                    new dom.PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 2, pointerType: "mouse", button: type === "pointermove" ? -1 : 2, buttons: type === "pointerup" ? 0 : 2, clientX: x, clientY: y }) as unknown as Event,
+                ),
+            );
         };
         const contextMenu = async () => {
             const event = new dom.MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 });

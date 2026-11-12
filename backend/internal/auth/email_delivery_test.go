@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -73,6 +74,8 @@ func TestPasswordResetRecordsSkipReasonsAndDeliveries(t *testing.T) {
 		}
 		got[entry.Recipient] = append(got[entry.Recipient], entry.Status+":"+entry.Reason)
 	}
+	// 两条记录可能拥有相同时间戳，按状态核对结果而不依赖随机 ID 的顺序。
+	slices.Sort(got["member@example.com"])
 	expect := func(recipient, prefix string, index int) {
 		t.Helper()
 		if len(got[recipient]) <= index || !strings.HasPrefix(got[recipient][index], prefix) {
