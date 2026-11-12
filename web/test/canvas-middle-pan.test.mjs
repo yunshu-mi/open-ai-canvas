@@ -118,6 +118,7 @@ function harness(k = 1, boxSelectEnabled = true) {
             });
             Object.defineProperties(event, { currentTarget: { value: container }, target: { value: container } });
             if (type === "pointerdown") element.props.onPointerDown(event);
+            else if (type === "contextmenu") element.props.onContextMenu(event);
             else window.dispatchEvent(event);
             render();
             return event;
@@ -197,4 +198,18 @@ test("releasing middle while left is still held stops before applying that point
     expect(h.current).toEqual({ x: 85, y: 25, k: 1 });
     expect(h.panning).toBe(false);
     expect(h.captured).toBe(null);
+});
+
+test("right drag pans while held and suppresses the menu after a multi-button release", () => {
+    const h = harness();
+    h.fire("pointerdown", { button: 2, buttons: 2 });
+    h.fire("pointermove", { clientX: 360, clientY: 290, buttons: 3 });
+    h.frame();
+    expect(h.current).toEqual({ x: 85, y: 25, k: 1 });
+    expect(h.panning).toBe(true);
+    h.fire("pointermove", { clientX: 380, clientY: 300, button: 2, buttons: 1 });
+    expect(h.current).toEqual({ x: 85, y: 25, k: 1 });
+    expect(h.panning).toBe(false);
+    expect(h.captured).toBe(null);
+    expect(h.fire("contextmenu").defaultPrevented).toBe(true);
 });
