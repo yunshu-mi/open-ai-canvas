@@ -94,7 +94,7 @@ function harness(k = 1, boxSelectEnabled = true) {
     };
     const module = { exports: {} };
     runInNewContext(source, {
-        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, performance, document: { body },
+        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, AbortController, performance, document: { body },
         ResizeObserver: class { observe() {} disconnect() {} },
         requestAnimationFrame: (fn) => { frames.set(++frameId, fn); return frameId; },
         cancelAnimationFrame: (id) => frames.delete(id),
