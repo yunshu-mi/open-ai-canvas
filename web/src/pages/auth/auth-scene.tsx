@@ -25,7 +25,9 @@ import { useUserStore } from "@/stores/use-user-store";
  */
 export function AuthScene() {
     const mode = useAuthLoginMode();
+    const [params] = useSearchParams();
     if (mode === null) return <FullScreenLoader />;
+    if (params.get("wechat_register") === "1") return <AuthPageScene />;
     if (mode === "modal") return <AuthDialogRedirect />;
     return <AuthPageScene />;
 }
@@ -94,7 +96,11 @@ function AuthPageScene() {
         <main className="auth-scene h-dvh min-h-0 overflow-y-auto lg:overflow-hidden">
             <div className="grid min-h-full lg:h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(520px,1fr)]">
                 <section className="auth-scene-hero relative min-h-[250px] overflow-hidden sm:min-h-[320px] lg:min-h-0" aria-label={t("auth.brandFilm", { brand: appearance.brandName })}>
-                    {videoActive ? <div ref={videoHost} className="absolute inset-0" aria-hidden="true" /> : appearance.authVideoPosterUrl && failedPosterURL !== appearance.authVideoPosterUrl ? <img className="absolute inset-0 size-full object-cover" src={appearance.authVideoPosterUrl} alt="" decoding="async" onError={() => setFailedPosterURL(appearance.authVideoPosterUrl)} /> : null}
+                    {videoActive ? (
+                        <div ref={videoHost} className="absolute inset-0" aria-hidden="true" />
+                    ) : appearance.authVideoPosterUrl && failedPosterURL !== appearance.authVideoPosterUrl ? (
+                        <img className="absolute inset-0 size-full object-cover" src={appearance.authVideoPosterUrl} alt="" decoding="async" onError={() => setFailedPosterURL(appearance.authVideoPosterUrl)} />
+                    ) : null}
                     <div aria-hidden className="auth-scene-hero-overlay absolute inset-0" />
                     <div aria-hidden className="auth-scene-video-blend absolute inset-y-0 right-0 hidden lg:block" />
                     <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-4 p-5 sm:p-7 lg:p-9">
@@ -102,7 +108,13 @@ function AuthPageScene() {
                             <BrandLogo theme={theme} className="size-8.5" alt="" fallback={<span className="size-8.5 bg-current" style={{ mask: "url(/logo.svg) center / contain no-repeat", WebkitMask: "url(/logo.svg) center / contain no-repeat" }} />} />
                             {appearance.brandName}
                         </Link>
-                        <button type="button" className="auth-scene-hero-control inline-flex items-center gap-2 rounded-full px-3 py-2 text-[var(--fs-label)] backdrop-blur-xl transition disabled:cursor-default" onClick={playVideo} disabled={videoPlaying || !appearance.authVideoUrl} aria-pressed={videoPlaying}>
+                        <button
+                            type="button"
+                            className="auth-scene-hero-control inline-flex items-center gap-2 rounded-full px-3 py-2 text-[var(--fs-label)] backdrop-blur-xl transition disabled:cursor-default"
+                            onClick={playVideo}
+                            disabled={videoPlaying || !appearance.authVideoUrl}
+                            aria-pressed={videoPlaying}
+                        >
                             <Play className="size-3 fill-current" />
                             {videoPlaying ? t("auth.videoPlaying") : t("auth.playVideo")}
                         </button>
