@@ -1,3 +1,5 @@
+import { workspacePath, workspaceTeamId } from "@/lib/workspace-routes";
+import { captureSkillLibraryAccess, hasSkillLibraryAccess, isSkillLibraryAccessCurrent, useSkillLibraryAccess } from "@/lib/skill-access";
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { App, Button, Spin } from "antd";
 import { Tooltip } from "@/components/ui/base/tooltip";
@@ -7,6 +9,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import type { AssetLibraryPickerItem } from "@/components/assets/asset-library-picker-modal";
+import { PersonalSpaceCreditOverview } from "@/components/layout/team-space-directory";
 import { generationErrorCode, generationErrorMessage } from "@/lib/generation-error";
 import { useGenerationBatchLimit } from "@/lib/generation-batch-limit";
 import { isGenerationCostUncertainError } from "@/lib/canvas/canvas-generation-batch";
@@ -32,7 +35,7 @@ import { CreationHistorySync, CREATION_HISTORY_SYNC_KEY, type HistorySyncStatus 
 import { creationHistoryMedia, restoreHistoryMedia } from "@/services/creation-history-media";
 import { resolveModelChannel, resolveModelRequestConfig, selectableModelsByCapability, useConfigStore, useEffectiveConfig } from "@/stores/use-config-store";
 import { useCreationPreferencesStore } from "@/stores/use-creation-preferences-store";
-import { useAssetStore, type Asset } from "@/stores/use-asset-store";
+import { useAssetStore } from "@/stores/use-asset-store";
 import { loadAssetsForUse, saveRemoteUserDataNow } from "@/services/user-data-sync";
 import { useAppearanceStore } from "@/stores/use-appearance-store";
 import { useThemePack } from "@/themes/use-theme-pack";
@@ -182,12 +185,13 @@ export default function CreatePage() {
     const [historySync, setHistorySync] = useState<HistorySyncStatus>({ phase: "local" });
     const inspirationSourcesVisible = useUserStore((state) => state.features.inspirationSourcesVisible);
     const [conversationScope, setConversationScope] = useState<string | null>(() => (initialConversationSnapshot ? activeConversationScope : null));
-    const [mode, setMode] = useState<CreationMode>(() => initialComposerPreferences.mode || defaultCreationMode);
+    const [mode, setMode] = useState<CreationMode>(() => (workspaceTeamId ? "text" : initialComposerPreferences.mode || defaultCreationMode));
     const [prompt, setPrompt] = useState("");
     const [attachments, setAttachments] = useState<CreationAttachment[]>([]);
     const promptRef = useRef(prompt);
     const attachmentsRef = useRef(attachments);
     const [draftReferences, setDraftReferences] = useState<CreationReference[]>([]);
+    const canUseSkills = useSkillLibraryAccess();
     const [addedSkills, setAddedSkills] = useState<Skill[]>([]);
     const addedSkillsRequestedRef = useRef(false);
     const [ratio, setRatio] = useState("16:9");
@@ -214,7 +218,7 @@ export default function CreatePage() {
         if (!requireCreationLogin()) return;
         setLibraryOpen(true);
     };
-    const externalAssetSources = useExternalAssetSources(libraryOpen);
+    const externalAssetSources = useExternalAssetSources(libraryOpen && !workspaceTeamId);
     const abortRef = useRef<AbortController | null>(null);
     const composerFocusRef = useRef<HTMLTextAreaElement>(null);
     const threadScrollRef = useRef<HTMLElement>(null);
@@ -308,7 +312,15 @@ export default function CreatePage() {
         if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) return undefined;
         return { width, height };
     }, [attachments]);
-    const mentionReferences = useMemo(() => buildCreationMentionReferences(addedSkills, attachments, draftReferences), [addedSkills, attachments, draftReferences]);
+    const mentionReferences = useMemo(
+        () =>
+            buildCreationMentionReferences(
+                canUseSkills ? addedSkills : [],
+                attachments,
+                draftReferences.filter((reference) => canUseSkills || (reference.kind !== "skill" && !reference.skill)),
+            ),
+        [addedSkills, attachments, draftReferences, canUseSkills],
+    );
     const isEmpty = !activeConversation?.messages.length;
 
     // 空首页从顶部开始；有消息的对话由跟随消息逻辑管理滚动。
@@ -336,7 +348,7 @@ export default function CreatePage() {
     useEffect(() => {
         if (!composerPreferencesHydrated || composerPreferencesInitialized) return;
         const saved = useCreationPreferencesStore.getState().preferences;
-        const nextMode = saved.mode || defaultCreationMode;
+        const nextMode = workspaceTeamId ? "text" : saved.mode || defaultCreationMode;
         setMode(nextMode);
         if (nextMode === "image" && saved.image) {
             if (saved.image.ratio) setRatio(saved.image.ratio);
@@ -494,12 +506,19 @@ export default function CreatePage() {
         [],
     );
 
+    useEffect(() => {
+        setAddedSkills([]);
+        addedSkillsRequestedRef.current = false;
+    }, [canUseSkills, userId]);
     const loadAddedSkills = useCallback(() => {
-        if (addedSkillsRequestedRef.current) return;
+        const access = captureSkillLibraryAccess();
+        if (!access || addedSkillsRequestedRef.current) return;
         addedSkillsRequestedRef.current = true;
         void import("@/services/api/skills")
             .then(({ listAddedSkills }) => listAddedSkills())
-            .then(({ skills }) => setAddedSkills(skills))
+            .then(({ skills }) => {
+                if (isSkillLibraryAccessCurrent(access)) setAddedSkills(skills);
+            })
             .catch(() => setAddedSkills([]));
     }, []);
 
@@ -701,6 +720,7 @@ export default function CreatePage() {
     };
 
     const selectMode = (next: CreationMode) => {
+        if (workspaceTeamId && next !== "text") return;
         setMode(next);
         rememberMode(next);
         const nextModels = selectableModelsByCapability(config, next);
@@ -747,15 +767,16 @@ export default function CreatePage() {
     const libraryItems = useMemo<AssetLibraryPickerItem[]>(
         () => [
             ...assets
-                .filter((asset): asset is Extract<Asset, { kind: "image" | "video" | "audio" }> => asset.kind === "image" || asset.kind === "video" || asset.kind === "audio")
+                .filter((asset) => (workspaceTeamId ? asset.kind === "text" : asset.kind === "image" || asset.kind === "video" || asset.kind === "audio"))
                 .map((asset) => ({
                     id: asset.id,
                     title: asset.title,
                     category: asset.category || "other",
-                    kindLabel: asset.kind === "video" ? t("create.kind.video") : asset.kind === "audio" ? t("create.kind.audio") : t("create.kind.image"),
+                    kindLabel: asset.kind === "text" ? t("library.picker.kind.text") : asset.kind === "video" ? t("create.kind.video") : asset.kind === "audio" ? t("create.kind.audio") : t("create.kind.image"),
+                    archived: asset.status === "archived",
                     asset,
                     searchText: (asset.tags || []).join(" "),
-                    disabledReason: creationLibraryDisabledReason(mode, asset.kind, videoReferenceLimits),
+                    disabledReason: creationLibraryDisabledReason(mode, asset.kind, videoReferenceLimits, Boolean(workspaceTeamId)),
                 })),
             ...externalLibraryItems,
         ],
@@ -806,6 +827,18 @@ export default function CreatePage() {
 
     const handleLibrarySelect = async (selectedIds: string[], pickedItems = libraryItems) => {
         if (!requireCreationLogin()) return;
+        if (workspaceTeamId) {
+            await loadAssetsForUse(selectedIds, { refresh: true });
+            const byId = new Map(useAssetStore.getState().assets.map((asset) => [asset.id, asset]));
+            const passages = selectedIds.map((id) => {
+                const asset = byId.get(id);
+                if (asset?.kind !== "text" || asset.status === "archived") throw new Error("请选择当前空间中未归档的文本素材");
+                return asset.data.content;
+            });
+            setPrompt((current) => [current, ...passages].filter(Boolean).join("\n\n"));
+            setLibraryOpen(false);
+            return;
+        }
         const next = creationLibrarySelectionToAttachments(selectedIds, pickedItems, mode, videoReferenceLimits);
         if (!next.length) return;
         const selected = new Set(selectedIds);
@@ -962,7 +995,7 @@ export default function CreatePage() {
             audioCount: referenceAudios.length,
             characterCount: 0,
         });
-        const skillReferences = references.flatMap((reference) => (reference.skill ? [reference.skill] : []));
+        const skillReferences = hasSkillLibraryAccess() ? references.flatMap((reference) => (reference.skill ? [reference.skill] : [])) : [];
         let runtime: CreationRuntime;
         try {
             runtime = await loadCreationRuntime();
@@ -1286,7 +1319,7 @@ export default function CreatePage() {
                 params.set("mode", "handoff");
                 [...new Set(assetIds)].forEach((id) => params.append("asset", id));
             }
-            navigate(`/canvas/${result.id}?${params.toString()}`);
+            navigate(workspacePath(`/canvas/${result.id}?${params.toString()}`));
         } catch (cause) {
             if (scope === getActiveUserScope()) toast.error(cause instanceof Error ? cause.message : t("create.page.handoffFailed"));
         } finally {
@@ -1653,16 +1686,19 @@ export default function CreatePage() {
                                         )}
                                     </CreationModeCard>
                                 </div>
-                                <CreationEmptySuggest
-                                    onStartPrompt={startPrompt}
-                                    onOpenLibrary={() => {
-                                        if (!requireCreationLogin()) return;
-                                        setAgentMode(false);
-                                        selectMode("image");
-                                        setLibraryOpen(true);
-                                    }}
-                                />
+                                {!workspaceTeamId && (
+                                    <CreationEmptySuggest
+                                        onStartPrompt={startPrompt}
+                                        onOpenLibrary={() => {
+                                            if (!requireCreationLogin()) return;
+                                            setAgentMode(false);
+                                            selectMode("image");
+                                            setLibraryOpen(true);
+                                        }}
+                                    />
+                                )}
                             </section>
+                            {!workspaceTeamId && <PersonalSpaceCreditOverview />}
                             <CreationRecentCanvases onRequireLogin={() => openAuth()} />
                             <Suspense
                                 fallback={
@@ -1671,7 +1707,7 @@ export default function CreatePage() {
                                     </div>
                                 }
                             >
-                                <InspirationHall onUse={(item) => startPrompt(item.mode, fillablePrompt(item))} />
+                                {!workspaceTeamId && <InspirationHall onUse={(item) => startPrompt(item.mode, fillablePrompt(item))} />}
                             </Suspense>
                             {inspirationSourcesVisible ? (
                                 <div className="creation-source-notice">
@@ -1750,26 +1786,32 @@ export default function CreatePage() {
                 <Suspense fallback={null}>
                     <AssetLibraryPickerModal
                         remoteLibrary
+                        remoteKind={workspaceTeamId ? "text" : undefined}
+                        confirmLabel={workspaceTeamId ? (count) => `插入文本（${count}）` : undefined}
                         acceptRemoteItems
-                        remoteItemDisabledReason={(asset) => creationLibraryDisabledReason(mode, asset.kind, videoReferenceLimits)}
+                        remoteItemDisabledReason={(asset) => creationLibraryDisabledReason(mode, asset.kind, videoReferenceLimits, Boolean(workspaceTeamId))}
                         open={libraryOpen}
                         items={libraryItems}
                         categoryLabels={{ ...creationAssetCategoryLabels, ...externalAssetSources.categoryLabels }}
                         folders={externalAssetSources.folders}
                         initialSelectedIds={attachments.flatMap((item) => (item.id.startsWith("asset:") ? [item.id.slice(6)] : item.id.startsWith("external:") ? [item.id] : []))}
-                        upload={{
-                            accept: creationUploadAccept(mode),
-                            description: mode === "text" ? t("create.page.uploadHintText") : mode === "video" ? t("create.page.uploadHintVideo") : t("create.page.uploadHintImage"),
-                            onUpload: uploadLibraryAssets,
-                            external: {
-                                accept: "image/*",
-                                description: t("create.page.uploadHintEagle"),
-                                onUpload: (files, folderId) => {
-                                    if (!requireCreationLogin()) return Promise.resolve([]);
-                                    return externalAssetSources.uploadExternalFiles(files, folderId);
-                                },
-                            },
-                        }}
+                        upload={
+                            workspaceTeamId
+                                ? undefined
+                                : {
+                                      accept: creationUploadAccept(mode),
+                                      description: mode === "text" ? t("create.page.uploadHintText") : mode === "video" ? t("create.page.uploadHintVideo") : t("create.page.uploadHintImage"),
+                                      onUpload: uploadLibraryAssets,
+                                      external: {
+                                          accept: "image/*",
+                                          description: t("create.page.uploadHintEagle"),
+                                          onUpload: (files, folderId) => {
+                                              if (!requireCreationLogin()) return Promise.resolve([]);
+                                              return externalAssetSources.uploadExternalFiles(files, folderId);
+                                          },
+                                      },
+                                  }
+                        }
                         onClose={() => setLibraryOpen(false)}
                         onConfirm={handleLibrarySelect}
                     />
