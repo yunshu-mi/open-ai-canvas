@@ -250,7 +250,7 @@ func TestSourcesMirrorDigestsAndComposeEnvironment(t *testing.T) {
 	sources := Sources{"direct", "nju"}
 	images := sources.images(m.config.Repository, "v2.0.0")
 	for _, image := range []string{images.backend, images.web, images.agent} {
-		if !strings.HasPrefix(image, "ghcr.nju.edu.cn/ddcat-ai/") || !strings.HasSuffix(image, ":2.0.0") {
+		if !strings.HasPrefix(image, "ghcr.nju.edu.cn/yunshu-mi/") || !strings.HasSuffix(image, ":2.0.0") {
 			t.Fatal(image)
 		}
 	}
@@ -290,7 +290,7 @@ func TestSourcesMirrorDigestsAndComposeEnvironment(t *testing.T) {
 		t.Fatal("mirror digest was not persisted", err)
 	}
 	m.runner = sourceRunner(func(_ context.Context, _ string, _ []string, _ []string, out, _ io.Writer) error {
-		return json.NewEncoder(out).Encode([]string{"ghcr.io/ddcat-ai/open-ai-canvas-backend@sha256:" + strings.Repeat("a", 64)})
+		return json.NewEncoder(out).Encode([]string{"ghcr.io/yunshu-mi/open-ai-canvas-backend@sha256:" + strings.Repeat("a", 64)})
 	})
 	if _, err := m.verifyImages(images); err == nil {
 		t.Fatal("digest from wrong registry accepted")
