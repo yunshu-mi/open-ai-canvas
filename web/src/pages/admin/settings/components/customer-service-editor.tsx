@@ -15,6 +15,9 @@ export function CustomerServiceEditor({
     file,
     removed,
     inputRef,
+    secondFile,
+    secondRemoved,
+    secondInputRef,
     onSelect,
     onReset,
     disabled,
@@ -24,22 +27,18 @@ export function CustomerServiceEditor({
     file: File | null;
     removed: boolean;
     inputRef: RefObject<HTMLInputElement | null>;
+    secondFile: File | null;
+    secondRemoved: boolean;
+    secondInputRef: RefObject<HTMLInputElement | null>;
     onSelect: (slot: AppearanceAssetSlot, file?: File) => void;
     onReset: (slot: AppearanceAssetSlot) => void;
     disabled: boolean;
 }) {
-    const [objectURL, setObjectURL] = useState("");
-    useEffect(() => {
-        if (!file) {
-            setObjectURL("");
-            return;
-        }
-        const url = URL.createObjectURL(file);
-        setObjectURL(url);
-        return () => URL.revokeObjectURL(url);
-    }, [file]);
+    const objectURL = useFilePreview(file);
+    const secondObjectURL = useFilePreview(secondFile);
     const change = (patch: Partial<CustomerServiceSetting>) => onChange({ ...value, ...patch });
     const qrCodeUrl = objectURL || (!removed && value.qrCodeResourceId ? adminResourceFileUrl(value.qrCodeResourceId) : "");
+    const secondQrCodeUrl = secondObjectURL || (!secondRemoved && value.secondQrCodeResourceId ? adminResourceFileUrl(value.secondQrCodeResourceId) : "");
 
     return (
         <SettingsSectionCard className="admin-appearance-section" icon={<Headset className="size-4" aria-hidden="true" />} title="客服配置" description="开启后在工作台右上角显示“客服”。修改完成后点击页面顶部“保存修改”生效；关闭会保留配置。">
@@ -54,6 +53,7 @@ export function CustomerServiceEditor({
                     <Form.Item label="说明文案" htmlFor="customer-service-description">
                         <Input.TextArea id="customer-service-description" value={value.description} maxLength={1000} rows={4} showCount placeholder="例如：添加微信，获取使用帮助" onChange={(event) => change({ description: event.target.value })} />
                     </Form.Item>
+                    <h3 className="mb-4 font-medium">客服一</h3>
                     <div className="admin-appearance-form-grid">
                         {(
                             [
@@ -80,11 +80,53 @@ export function CustomerServiceEditor({
                     disabled={disabled}
                     emptyLabel="未配置二维码"
                 />
+                <Form className="admin-appearance-form mt-6" layout="vertical" disabled={disabled}>
+                    <h3 className="mb-4 font-medium">客服二（可选）</h3>
+                    <div className="admin-appearance-form-grid">
+                        {(
+                            [
+                                ["secondContactName", "第二位客服名称"],
+                                ["secondPhone", "第二位手机号 / 联系电话"],
+                                ["secondWechat", "第二位微信号"],
+                            ] as const
+                        ).map(([key, label]) => (
+                            <Form.Item key={key} label={label} htmlFor={`customer-service-${key}`}>
+                                <Input id={`customer-service-${key}`} value={value[key]} maxLength={80} onChange={(event) => change({ [key]: event.target.value })} />
+                            </Form.Item>
+                        ))}
+                    </div>
+                </Form>
+                <AssetPicker
+                    slot="customer-service-second-qr"
+                    title="第二位客服二维码"
+                    description="PNG / JPEG / WebP，最大 5MB；留空时不展示第二个二维码。"
+                    configured={!secondRemoved && Boolean(value.secondQrCodeResourceId)}
+                    file={secondFile}
+                    inputRef={secondInputRef}
+                    onSelect={onSelect}
+                    onReset={onReset}
+                    disabled={disabled}
+                    emptyLabel="未配置第二位客服二维码"
+                />
                 <section className="mt-6 rounded-lg border border-border bg-background p-4" aria-label="客服弹窗实时预览">
                     <h3 className="font-medium">{value.title || "联系客服"}</h3>
-                    <CustomerServiceContent value={{ ...value, qrCodeUrl }} />
+                    <CustomerServiceContent value={{ ...value, qrCodeUrl, secondQrCodeUrl }} />
                 </section>
             </div>
         </SettingsSectionCard>
     );
+}
+
+function useFilePreview(file: File | null) {
+    const [url, setURL] = useState("");
+    useEffect(() => {
+        if (!file) {
+            setURL("");
+            return;
+        }
+        const nextURL = URL.createObjectURL(file);
+        setURL(nextURL);
+        return () => URL.revokeObjectURL(nextURL);
+    }, [file]);
+    return url;
 }

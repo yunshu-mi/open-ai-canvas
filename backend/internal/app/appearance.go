@@ -32,12 +32,13 @@ const (
 	AppearanceAssetUpdateImage = "update-image"
 	AppearanceAssetUpdateVideo = "update-video"
 
-	AppearanceAssetCustomerServiceQR = "customer-service-qr"
+	AppearanceAssetCustomerServiceQR       = "customer-service-qr"
+	AppearanceAssetCustomerServiceSecondQR = "customer-service-second-qr"
 )
 
 const (
 	appearanceThemePackLibraryVersion       = 12
-	appearanceSchemaVersion                 = appearanceThemePackLibraryVersion
+	appearanceSchemaVersion                 = 13
 	appearanceLogoMaxBytes            int64 = 5 << 20
 	appearancePosterMaxBytes          int64 = 10 << 20
 	appearanceVideoMaxBytes           int64 = 256 << 20
@@ -143,7 +144,7 @@ func defaultAppearanceSetting() AppearanceSetting {
 func AppearanceAssetMaxBytes(slot string) (int64, error) {
 	slot = strings.TrimSpace(slot)
 	switch strings.TrimSpace(slot) {
-	case AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetCustomerServiceQR:
+	case AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetCustomerServiceQR, AppearanceAssetCustomerServiceSecondQR:
 		return appearanceLogoMaxBytes, nil
 	case AppearanceAssetPoster, AppearanceAssetUpdateImage:
 		return appearancePosterMaxBytes, nil
@@ -159,7 +160,7 @@ func appearanceSlotIsVideo(slot string) bool {
 }
 
 func appearanceAssetSlots() []string {
-	return []string{AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetVideo, AppearanceAssetPoster, AppearanceAssetCustomerServiceQR}
+	return []string{AppearanceAssetLogo, AppearanceAssetDarkLogo, AppearanceAssetVideo, AppearanceAssetPoster, AppearanceAssetCustomerServiceQR, AppearanceAssetCustomerServiceSecondQR}
 }
 
 func (s *Service) Appearance() (*PublicAppearanceSetting, error) {
@@ -273,6 +274,7 @@ func (s *Service) UpdateAppearance(actor *model.User, value AppearanceSetting) (
 		{slot: AppearanceAssetVideo, resourceID: value.AuthVideoResourceID, currentID: before.AuthVideoResourceID},
 		{slot: AppearanceAssetPoster, resourceID: value.AuthVideoPosterResourceID, currentID: before.AuthVideoPosterResourceID},
 		{slot: AppearanceAssetCustomerServiceQR, resourceID: value.CustomerService.QRCodeResourceID, currentID: before.CustomerService.QRCodeResourceID},
+		{slot: AppearanceAssetCustomerServiceSecondQR, resourceID: value.CustomerService.SecondQRCodeResourceID, currentID: before.CustomerService.SecondQRCodeResourceID},
 	} {
 		if err := s.validateAppearanceResource(actor, candidate.slot, candidate.resourceID, candidate.currentID); err != nil {
 			return nil, err
@@ -352,7 +354,7 @@ func (s *Service) OpenAppearanceAsset(slot string, rangeHeader string) (*Resourc
 	if err != nil {
 		return nil, err
 	}
-	if slot == AppearanceAssetCustomerServiceQR && !value.CustomerService.Enabled {
+	if (slot == AppearanceAssetCustomerServiceQR || slot == AppearanceAssetCustomerServiceSecondQR) && !value.CustomerService.Enabled {
 		return nil, NotFound("客服入口未启用")
 	}
 	resourceID := appearanceResourceID(value, slot)
@@ -377,7 +379,7 @@ func (s *Service) PrepareAppearanceAssetDelivery(slot string, options ResourceAc
 	if err != nil {
 		return nil, err
 	}
-	if slot == AppearanceAssetCustomerServiceQR && !value.CustomerService.Enabled {
+	if (slot == AppearanceAssetCustomerServiceQR || slot == AppearanceAssetCustomerServiceSecondQR) && !value.CustomerService.Enabled {
 		return nil, NotFound("客服入口未启用")
 	}
 	resourceID := appearanceResourceID(value, slot)
@@ -420,6 +422,7 @@ func (s *Service) appearanceResourceReferences(resourceIDs []string) map[string]
 		{resourceID: value.AuthVideoResourceID, title: "登录页品牌视频"},
 		{resourceID: value.AuthVideoPosterResourceID, title: "登录页视频封面"},
 		{resourceID: value.CustomerService.QRCodeResourceID, title: "客服二维码"},
+		{resourceID: value.CustomerService.SecondQRCodeResourceID, title: "第二位客服二维码"},
 		{resourceID: value.Canvas.Live2DResourceID, title: "画布 Agent Live2D 形象"},
 		{resourceID: value.Canvas.AvatarBundleResourceID, title: "画布 Agent 动画包"},
 	}
@@ -521,6 +524,8 @@ func (s *Service) resolveAvailableAppearanceAssets(value AppearanceSetting) Appe
 			value.AuthVideoPosterResourceID = ""
 		case AppearanceAssetCustomerServiceQR:
 			value.CustomerService.QRCodeResourceID = ""
+		case AppearanceAssetCustomerServiceSecondQR:
+			value.CustomerService.SecondQRCodeResourceID = ""
 		}
 	}
 	if value.Canvas.AvatarBundleResourceID != "" && !s.agentAvatarBundleAvailable(value.Canvas.AvatarBundleResourceID) {
@@ -727,6 +732,8 @@ func appearanceAssetLabel(slot string) string {
 		return "公告视频"
 	case AppearanceAssetCustomerServiceQR:
 		return "客服二维码"
+	case AppearanceAssetCustomerServiceSecondQR:
+		return "第二位客服二维码"
 	default:
 		return "外观资源"
 	}
@@ -744,6 +751,8 @@ func appearanceResourceID(value AppearanceSetting, slot string) string {
 		return value.AuthVideoPosterResourceID
 	case AppearanceAssetCustomerServiceQR:
 		return value.CustomerService.QRCodeResourceID
+	case AppearanceAssetCustomerServiceSecondQR:
+		return value.CustomerService.SecondQRCodeResourceID
 	default:
 		return ""
 	}

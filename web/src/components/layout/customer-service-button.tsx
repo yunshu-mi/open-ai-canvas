@@ -15,7 +15,7 @@ export function CustomerServiceButton() {
                 <Headset aria-hidden="true" />
                 <span>客服</span>
             </button>
-            <AppModal open={open} title={value.title} footer={null} width={460} centered onCancel={() => setOpen(false)}>
+            <AppModal open={open} title={value.title} footer={null} width={value.secondContactName || value.secondPhone || value.secondWechat || value.secondQrCodeUrl ? 640 : 460} centered onCancel={() => setOpen(false)}>
                 <CustomerServiceContent value={value} />
             </AppModal>
         </>
