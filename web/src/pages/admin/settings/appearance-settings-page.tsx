@@ -33,8 +33,8 @@ import { type DraftFiles, FILE_RULES, type ResetState } from "./appearance-setti
 
 export { type DraftFiles, FILE_RULES, type ResetState } from "./appearance-settings-parts";
 
-const EMPTY_FILES: DraftFiles = { logo: null, "logo-dark": null, video: null, poster: null, "customer-service-qr": null };
-const EMPTY_RESETS: ResetState = { logo: false, "logo-dark": false, video: false, poster: false, "customer-service-qr": false };
+const EMPTY_FILES: DraftFiles = { logo: null, "logo-dark": null, video: null, poster: null, "customer-service-qr": null, "customer-service-second-qr": null };
+const EMPTY_RESETS: ResetState = { logo: false, "logo-dark": false, video: false, poster: false, "customer-service-qr": false, "customer-service-second-qr": false };
 
 function TurnstileProtectionPanel() {
     const { message } = App.useApp();
@@ -197,6 +197,7 @@ export default function AppearanceSettingsPage() {
         video: useRef<HTMLInputElement>(null),
         poster: useRef<HTMLInputElement>(null),
         "customer-service-qr": useRef<HTMLInputElement>(null),
+        "customer-service-second-qr": useRef<HTMLInputElement>(null),
     };
 
     const dirty =
@@ -416,8 +417,13 @@ export default function AppearanceSettingsPage() {
     const save = async () => {
         if (!setting || saving || restoring || canvasUploading) return;
         const qrSlot = "customer-service-qr";
-        const nextCustomerService = { ...customerService, qrCodeResourceId: resets[qrSlot] ? "" : customerService.qrCodeResourceId };
-        const customerServiceError = validateCustomerService({ ...nextCustomerService, qrCodeResourceId: files[qrSlot] ? "pending-upload" : nextCustomerService.qrCodeResourceId });
+        const secondQrSlot = "customer-service-second-qr";
+        const nextCustomerService = { ...customerService, qrCodeResourceId: resets[qrSlot] ? "" : customerService.qrCodeResourceId, secondQrCodeResourceId: resets[secondQrSlot] ? "" : customerService.secondQrCodeResourceId };
+        const customerServiceError = validateCustomerService({
+            ...nextCustomerService,
+            qrCodeResourceId: files[qrSlot] ? "pending-upload" : nextCustomerService.qrCodeResourceId,
+            secondQrCodeResourceId: files[secondQrSlot] ? "pending-upload" : nextCustomerService.secondQrCodeResourceId,
+        });
         if (customerServiceError) {
             setActiveTab("customer-service");
             message.error(customerServiceError);
@@ -507,8 +513,9 @@ export default function AppearanceSettingsPage() {
                 video: resets.video ? "" : setting.authVideoResourceId,
                 poster: resets.poster ? "" : setting.authVideoPosterResourceId,
                 "customer-service-qr": nextCustomerService.qrCodeResourceId,
+                "customer-service-second-qr": nextCustomerService.secondQrCodeResourceId,
             };
-            for (const slot of ["logo", "logo-dark", "video", "poster", "customer-service-qr"] as AppearanceAssetSlot[]) {
+            for (const slot of ["logo", "logo-dark", "video", "poster", "customer-service-qr", "customer-service-second-qr"] as AppearanceAssetSlot[]) {
                 const file = files[slot];
                 if (!file) continue;
                 const resource = await uploadAppearanceAsset(slot, file);
@@ -518,7 +525,7 @@ export default function AppearanceSettingsPage() {
             const updated = await updateAdminAppearance({
                 canvas,
                 updates,
-                customerService: { ...nextCustomerService, qrCodeResourceId: ids[qrSlot] },
+                customerService: { ...nextCustomerService, qrCodeResourceId: ids[qrSlot], secondQrCodeResourceId: ids[secondQrSlot] },
                 brandName: nextBrandName,
                 brandSlug: nextBrandSlug,
                 authHeroTitle: nextAuthHeroTitle,
@@ -959,6 +966,9 @@ export default function AppearanceSettingsPage() {
                                         file={files["customer-service-qr"]}
                                         removed={resets["customer-service-qr"]}
                                         inputRef={inputRefs["customer-service-qr"]}
+                                        secondFile={files["customer-service-second-qr"]}
+                                        secondRemoved={resets["customer-service-second-qr"]}
+                                        secondInputRef={inputRefs["customer-service-second-qr"]}
                                         onSelect={selectFile}
                                         onReset={resetAsset}
                                         disabled={saving || refreshing || restoring || canvasUploading}

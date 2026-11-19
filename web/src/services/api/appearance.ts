@@ -69,7 +69,7 @@ export type AdminAppearance = {
     updatedAt?: string;
 };
 
-export type AppearanceAssetSlot = "logo" | "logo-dark" | "video" | "poster" | "customer-service-qr";
+export type AppearanceAssetSlot = "logo" | "logo-dark" | "video" | "poster" | "customer-service-qr" | "customer-service-second-qr";
 export type AppearanceAssetUploadSlot = AppearanceAssetSlot;
 
 export type AppearanceResource = {

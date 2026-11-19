@@ -14,6 +14,21 @@
 .customer-service-content p {
     margin: 0;
 }
+.customer-service-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-8);
+    width: 100%;
+}
+.customer-service-person {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    flex: 0 1 224px;
+    min-width: 0;
+}
 .customer-service-description {
     white-space: pre-wrap;
 }

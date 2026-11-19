@@ -561,11 +561,15 @@ CANVAS_BACKEND_DATA_DIR=/明确的数据目录 ./migrate-schema repair-canvas-re
 前端站内登录入口、受保护页面的未登录跳转与退出登录后的去向按 `loginMode` 分发。弹窗模式下直达 `/login`、`/register`、`/forgot-password`（推广链接 `?ref=`、Linux.do 回跳 `?oauth_error=`、书签）会回到可公开访问的页面并打开对应视图，登录成功后进入 `next`。读取 `/auth/settings` 失败时前端退回独立页面。首页创作输入框的未发送内容只在内存中，该入口在两种模式下都使用弹窗。
 ## 站点皮肤主按钮
 
-### 客服入口（外观合同版本 12）
+### 客服入口（外观合同版本 13）
 
 管理员通过 `GET/PATCH /admin/settings/appearance` 读取和保存 `customerService`：`enabled`、`title`（最多 40 字，启用时必填）、`description`（最多 1000 字，支持换行）、`contactName`、`phone`、`wechat`（各最多 80 字）与 `qrCodeResourceId`。启用时至少填写一项内容或上传二维码。配置保存后展示在工作台右上角，游客也可以查看。
 
+第二位客服为可选配置：`secondContactName`、`secondPhone`、`secondWechat`（各最多 80 字）和 `secondQrCodeResourceId`。两位客服共用弹窗标题、说明和入口开关；第二位留空时不展示，也允许仅配置第二位。前台与后台预览均将每位客服的二维码和联系方式成组展示，宽屏并排、窄屏换行。
+
 `POST /admin/settings/appearance/assets/customer-service-qr` 接收管理员 multipart `file`，允许 PNG/JPEG/WebP，最大 5 MiB；沿用现有上传限流、配额和文件内容检测。保存时校验资源状态、图片类型和归属，其他管理员可以保留当前已引用资源，不能新引用他人的上传。
+
+第二张二维码使用相同限制的 `POST /admin/settings/appearance/assets/customer-service-second-qr` 上传。公共投影为 `secondQrCodeUrl`，读取路径为 `GET /public/appearance/assets/customer-service-second-qr`；关闭客服入口或清除第二张二维码引用后拒绝读取，两张二维码分别参与资源删除保护。保存失败时两份文件草稿都保留，供重试。
 
 `GET /public/appearance` 返回 `customerService` 的展示字段及服务端生成的 `qrCodeUrl`，不暴露资源 ID。二维码通过 `GET /public/appearance/assets/customer-service-qr` 提供，关闭入口或恢复默认后拒绝公开读取；已签发的外部存储链接仍遵循原有有效期。关闭开关保留后台草稿与资源引用，公共配置清空展示内容。引用中的二维码禁止删除，清除引用后才允许走既有资源删除流程。未保存文件只在后台本地预览，保存成功后发布。
 

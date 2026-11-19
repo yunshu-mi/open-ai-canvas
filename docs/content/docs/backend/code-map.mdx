@@ -174,6 +174,8 @@ description: 从产品功能快速定位主要代码入口
 
 ## 客服入口与配置
 
+- 两位客服字段与校验位于 `web/src/lib/customer-service.ts`、`backend/internal/app/appearance_customer_service.go`；第二张二维码槽位为 `customer-service-second-qr`，与第一张分别执行上传、公开读取及引用保护。后台编辑器与前台 `customer-service-content.tsx` 共用分组展示。
+
 - 工作台入口与联系弹窗：`web/src/components/layout/customer-service-button.tsx`；内容与后台预览共用 `customer-service-content.tsx`。
 - 后台：`web/src/pages/admin/settings/components/customer-service-editor.tsx`，接入 `appearance-settings-page.tsx` 的草稿、上传与统一保存；字段合同和校验：`web/src/lib/customer-service.ts`。
 - 后端字段与公开投影：`backend/internal/app/appearance_customer_service.go`；持久化、资源上传、访问与引用保护复用 `appearance.go`，HTTP 边界沿用 `backend/internal/handler/appearance.go`。

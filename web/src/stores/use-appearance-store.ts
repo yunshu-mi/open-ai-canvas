@@ -10,10 +10,10 @@ import { applyThemeBrandVariables, applyThemePackCanvas } from "@/themes/apply";
 import { useDocumentTitleStore } from "@/stores/use-document-title-store";
 
 export const DEFAULT_PUBLIC_APPEARANCE: PublicAppearance = {
-    customerService: { ...DEFAULT_CUSTOMER_SERVICE, qrCodeUrl: "" },
+    customerService: { ...DEFAULT_CUSTOMER_SERVICE, qrCodeUrl: "", secondQrCodeUrl: "" },
     updates: DEFAULT_UPDATE_ANNOUNCEMENT,
     canvas: DEFAULT_CANVAS_APPEARANCE,
-    schemaVersion: 12,
+    schemaVersion: 13,
     brandName: "影策",
     brandSlug: "open-ai-canvas",
     authHeroTitle: "让一个故事，\n从文字走向银幕。",
@@ -83,8 +83,8 @@ export function normalizePublicAppearance(value?: Partial<PublicAppearance> | nu
     return {
         ...DEFAULT_PUBLIC_APPEARANCE,
         ...value,
-        schemaVersion: 12,
-        customerService: { ...DEFAULT_CUSTOMER_SERVICE, ...value?.customerService, qrCodeUrl: safeAppearanceURL(value?.customerService?.qrCodeUrl, "") },
+        schemaVersion: 13,
+        customerService: { ...DEFAULT_CUSTOMER_SERVICE, ...value?.customerService, qrCodeUrl: safeAppearanceURL(value?.customerService?.qrCodeUrl, ""), secondQrCodeUrl: safeAppearanceURL(value?.customerService?.secondQrCodeUrl, "") },
         updates: normalizeUpdateAnnouncement(value?.updates),
         canvas: { ...DEFAULT_CANVAS_APPEARANCE, ...value?.canvas },
         brandName: resolvedBrandName,
