@@ -45,12 +45,14 @@ function harness(k = 1, boxSelectEnabled = true) {
     const world = { style: {} };
     const grid = { style: {}, dataset: {} };
     const properties = new Map([["--canvas-committed-scale", String(k)]]);
+    const document = Object.assign(new EventTarget(), { body: { style: {} } });
     class Element extends EventTarget {
         closest() { return null; }
         contains(target) { return target === this; }
     }
     const container = Object.assign(new Element(), {
         dataset: {},
+        ownerDocument: document,
         style: {
             getPropertyValue: (name) => properties.get(name) ?? "",
             setProperty: (name, value) => properties.set(name, value),
@@ -64,7 +66,6 @@ function harness(k = 1, boxSelectEnabled = true) {
     container.addEventListener("canvas:graphics-viewport-preview", (event) => graphics.push(event.detail));
     const containerRef = { current: container };
     const window = new EventTarget();
-    const body = { style: {} };
     const effect = (fn, deps) => {
         const i = cursor++;
         const previous = cells[i];
@@ -94,7 +95,7 @@ function harness(k = 1, boxSelectEnabled = true) {
     };
     const module = { exports: {} };
     runInNewContext(source, {
-        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, AbortController, performance, document: { body },
+        module, exports: module.exports, hooks, window, Element, Event, CustomEvent, AbortController, performance, document,
         ResizeObserver: class { observe() {} disconnect() {} },
         requestAnimationFrame: (fn) => { frames.set(++frameId, fn); return frameId; },
         cancelAnimationFrame: (id) => frames.delete(id),
@@ -129,7 +130,7 @@ function harness(k = 1, boxSelectEnabled = true) {
             pending.forEach((fn) => fn(100));
         },
         get captured() { return captured; },
-        get panning() { return element.props["data-canvas-pan-state"] === "grabbing"; },
+        get panning() { return container.dataset.canvasViewportInteracting === "true"; },
         get current() { return previews.at(-1) ?? viewport; },
         world, grid, nodes, graphics, commits, container,
     };
