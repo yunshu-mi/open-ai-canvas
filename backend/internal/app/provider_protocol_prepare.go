@@ -183,26 +183,30 @@ func executeProtocolCreateWithRetry(ctx context.Context, input canvasGenerationI
 		attempts = lifecycle.CreateAttempts
 	}
 	for attempt := 0; attempt < attempts; attempt++ {
-		body, streamed, err := executeProtocolCreateRequest(withProviderRequestKind(ctx, "create"), input, spec)
-		var result protocol.CreateResult
-		if err == nil {
-			if streamed != nil {
-				return protocol.CreateResult{Status: protocol.StatusSucceeded, Result: streamed}, nil
-			}
-			if parser, ok := adapter.(protocol.RequestAwareCreateParser); ok {
-				result, err = parser.ParseCreateWithRequest(ctx, request, body)
-			} else {
-				result, err = adapter.ParseCreate(ctx, body)
-			}
+		receipt := protocolHTTPReceipt{parse: func(body []byte) (protocol.CreateResult, error) {
+			result, err := parseProtocolMediaCreate(ctx, adapter, request, body)
 			if err == nil && result.TaskID == "" {
 				result.TaskID, err = extractProviderTaskID(body)
 			}
 			if err == nil && result.TaskID == "" && result.Result == nil && (attempts > 1 || (result.Status != protocol.StatusFailed && result.Status != protocol.StatusCancelled)) {
 				err = providerResponseDecodeError{Err: errors.New("创建响应缺少任务 ID")}
 			}
+			return result, err
+		}}
+		attemptCtx := withProviderRequestKind(ctx, "create")
+		if adapter.Metadata().Poll != "" {
+			attemptCtx = withProtocolHTTPReceipt(attemptCtx, &receipt)
 		}
+		body, streamed, err := executeProtocolCreateRequest(attemptCtx, input, spec)
 		if err == nil {
-			return result, nil
+			if streamed != nil {
+				return protocol.CreateResult{Status: protocol.StatusSucceeded, Result: streamed}, nil
+			}
+			result, parseErr := receipt.decode(body)
+			if parseErr == nil {
+				return result, nil
+			}
+			err = parseErr
 		}
 		retry, _ := retryableVideoPollError(ctx, err)
 		if attempt+1 == attempts || !retry {

@@ -115,22 +115,7 @@ func runProtocolAdapterTaskWithPolicy(ctx context.Context, input canvasGeneratio
 		if adapter.Metadata().Lifecycle != nil && !adapter.Metadata().IdempotentCreate {
 			created, err = executeProtocolCreateWithRetry(ctx, input, adapter, spec, request, policy)
 		} else {
-			body, streamedResult, err := executeIdempotentProtocolCreate(ctx, input, spec, adapter.Metadata().IdempotentCreate)
-			if err != nil {
-				return nil, err
-			}
-			if streamedResult != nil {
-				created = protocol.CreateResult{Status: protocol.StatusSucceeded, Result: streamedResult}
-			} else {
-				if parser, ok := adapter.(protocol.RequestAwareCreateParser); ok {
-					created, err = parser.ParseCreateWithRequest(ctx, request, body)
-				} else {
-					created, err = adapter.ParseCreate(ctx, body)
-				}
-			}
-			if err == nil && created.TaskID == "" {
-				created.TaskID, err = extractProviderTaskID(body)
-			}
+			created, err = submitProtocolMediaTask(ctx, input, adapter, request, spec)
 		}
 		if err != nil {
 			return nil, err
@@ -168,20 +153,9 @@ func runProtocolAdapterTaskWithPolicy(ctx context.Context, input canvasGeneratio
 
 	var lateResult protocolLateResultWait
 	return runVideoPollLoop(ctx, taskID, policy, func(ctx context.Context) (videoPollOutcome, error) {
-		spec, err := adapter.BuildPoll(ctx, protocol.PollContext{BaseURL: input.Config.BaseURL, Model: request.Model, Request: request, TaskID: taskID})
+		state, err := pollProtocolTask(ctx, input.Config, adapter, request, taskID)
 		if err != nil {
 			return videoPollOutcome{}, err
-		}
-		body, err := executeProtocolRequest(withProviderRequestKind(ctx, "poll"), input.Config, spec)
-		if err != nil {
-			return videoPollOutcome{}, err
-		}
-		state, err := adapter.ParsePoll(ctx, protocol.PollContext{BaseURL: input.Config.BaseURL, Model: request.Model, Request: request, TaskID: taskID}, body)
-		if err != nil {
-			return videoPollOutcome{}, err
-		}
-		if state.TaskID != "" {
-			taskID = state.TaskID
 		}
 		switch state.Status {
 		case protocol.StatusSucceeded:
@@ -229,16 +203,7 @@ func extractProviderTaskID(body []byte) (string, error) {
 // 人工恢复走此路径，因此检查本地失败任务时绝不会创建第二个计费任务。
 func queryProtocolAdapterVideoTask(ctx context.Context, input canvasGenerationInput, adapter protocol.Adapter, taskID string) (map[string]interface{}, string, error) {
 	request := protocolRequestFromInput(input)
-	pollContext := protocol.PollContext{BaseURL: input.Config.BaseURL, Model: request.Model, Request: request, TaskID: taskID}
-	spec, err := adapter.BuildPoll(ctx, pollContext)
-	if err != nil {
-		return nil, "", err
-	}
-	body, err := executeProtocolRequest(withProviderRequestKind(ctx, "poll"), input.Config, spec)
-	if err != nil {
-		return nil, "", err
-	}
-	state, err := adapter.ParsePoll(ctx, pollContext, body)
+	state, err := pollProtocolTask(ctx, input.Config, adapter, request, taskID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -254,6 +219,27 @@ func queryProtocolAdapterVideoTask(ctx context.Context, input canvasGenerationIn
 	default:
 		return nil, providerStatus, fmt.Errorf("声明式协议任务 %s 返回未知状态：%s", taskID, providerStatus)
 	}
+}
+
+func pollProtocolTask(ctx context.Context, config providerConfig, adapter protocol.Adapter, request protocol.GenerationRequest, taskID string) (protocol.PollResult, error) {
+	poll := protocol.PollContext{BaseURL: config.BaseURL, Model: request.Model, Request: request, TaskID: taskID}
+	spec, err := adapter.BuildPoll(ctx, poll)
+	if err != nil {
+		return protocol.PollResult{}, err
+	}
+	receipt := protocolHTTPReceipt{parse: func(body []byte) (protocol.CreateResult, error) {
+		state, err := adapter.ParsePoll(ctx, poll, body)
+		if err == nil && state.TaskID != "" && state.TaskID != taskID {
+			return protocol.CreateResult{}, errors.New("上游回查返回了不匹配的任务 ID，请核对原任务")
+		}
+		return protocol.CreateResult(state), err
+	}}
+	body, err := executeProtocolRequest(withProtocolHTTPReceipt(withProviderRequestKind(ctx, "poll"), &receipt), config, spec)
+	if err != nil {
+		return protocol.PollResult{}, err
+	}
+	state, err := receipt.decode(body)
+	return protocol.PollResult(state), err
 }
 
 func validateGenerationInterface(mode string, interfaceType string) error {

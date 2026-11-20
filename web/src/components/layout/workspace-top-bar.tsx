@@ -91,6 +91,7 @@ export function WorkspaceTopBar({ sidebarOpen, onToggleSidebar }: { sidebarOpen:
                 )}
                 <div className="app-workspace-topbar-utilities">
                     <LanguageMenu />
+                    <CustomerServiceButton />
                     {user ? <TopbarFeedbackButton /> : null}
                     {user && teamsEnabled ? (
                         <button type="button" className="app-workspace-topbar-icon-button" aria-label="团队邀请" title="团队邀请" onClick={openTeamInvitations}>
