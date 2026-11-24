@@ -304,7 +304,7 @@ func doBinaryWithConsumer(req *http.Request, onChunk func(string, []byte)) ([]by
 	if limit, ok := req.Context().Value(protocolReadLimitKey{}).(int64); ok && limit > 0 {
 		responseLimit = min(responseLimit, limit)
 	}
-	if _, err := ValidateOutboundURL(req.URL.String()); err != nil {
+	if _, err := ValidateOutboundURLWithProxy(req.URL.String(), channelProxyURL); err != nil {
 		recordProviderRequest(req, startedAt, 0, nil, err)
 		return nil, "", err
 	}
